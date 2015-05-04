@@ -58,18 +58,24 @@ lm.Boston <- lm(medv ~., data=Boston)
 We do pretty well with linear regression
 R-squared of .74
 
+## CART
+
 How about if we just blindly apply Decision Trees
 
-```{r}
+```{r,fig.height=6}
 rpart.Boston <- rpart(medv ~., data=Boston)
 #summary(rpart.Boston)
 plot(rpart.Boston);text(rpart.Boston)
+
+# this can be hard to interpret, so I like to look at a different output
+rpart.Boston
 
 pred1 <- predict(rpart.Boston)
 cor(pred1,Boston$medv)**2
 ```
 Doing really well -- Rsquared = 0.81\
 
+## Lasso Regression
 
 What if we tried regularized (penalized) regression instead?\
 Note: for glmnet, both the x's and y have to be in separate matrices\
@@ -77,7 +83,7 @@ Note: for glmnet, both the x's and y have to be in separate matrices\
 -- don't worry about response, doesn't have to be factor for logistic\
 ----- just specify "binomial"\
 
-```{r}
+```{r,message=FALSE}
 y.B <- Boston$medv
 x.B <- sapply(Boston[,-14],as.numeric)
 
@@ -93,13 +99,9 @@ cor(y.B,lasso.resp)**2
 
 Taking into account cross-validation, we do worse compared to linear regression with no tuning.\
 
-So what does the tree look like?
-```{r}
-plot(rpart.Boston);text(rpart.Boston)
-```
 
-Doesn't come out that well!\
-Good news, there are better options for plotting!!!!\
+So the plot for rpart didn'tcome out that well.\
+Good news, there are better options for plotting.\
 \
 http://blog.revolutionanalytics.com/2013/06/plotting-classification-and-regression-trees-with-plotrpart.html
 \
@@ -133,15 +135,21 @@ prp(rpart.Boston,varlen=10,digits=5,fallen.leaves=T)
 fancyRpartPlot(rpart.Boston)
 ```
 
+## Conditional Inference Trees
 So what about with conditional inference trees?
 
+What if we want a smaller tree? This can be accomplished a number of ways. We can prespecify the maxdepth, the minimum number of people per node, as well as making more restrictive splitting criterion.
+
+Example of prespecifying the depth with ctree()
 ```{r}
 ctree.Boston <- ctree(medv ~., data=Boston)
-
+#plot(ctree.Boston) # too big of a tree
 pred2 <- predict(ctree.Boston)
 cor(pred2,Boston$medv)**2
 ```
 We do better than rpart, Rsquared = 0.87\
+\
+Biggest difference between ctree() and rpart() is that ctree() does not demonstrate bias with respect to the number of response options, and supposedly had less of a propensity to overfit than rpart().
 \
 Note: the models are not optimizing based on Rsquared, most likely MSE\
 \
@@ -184,6 +192,21 @@ cor(pred.rpartTest,Boston.test$medv)**2
 ```
 
 Not as good -- drops from 0.81 to 0.76 -- still better than lm()\
+
+But with rpart, it is common to prune trees back. What if we try this, is there less of a drop in $R^{2}$?
+
+Note: rpart automatically does internal CV, varying the complexity paramter (cp). If you use the tree package instead, you will have to use cv.tree()
+
+With plotcp() we are going to choose the error within 1 SE of the lowest cross-validated error. This will be used to prune
+
+```{r}
+plotcp(rpart.train)
+printcp(rpart.train)
+prune.Bos <- prune(rpart.train,0.017)
+
+#plot(prune.Bos);text(prune.Bos)
+fancyRpartPlot(prune.Bos)
+```
 
 caret:
 ```{r}
@@ -273,12 +296,36 @@ plot(rocCurve.lasso, legacy.axes = TRUE,print.thres=T,print.auc=T)
 
 Almost identical results to logistic regression with no penalization.
 
+## Using Decision Trees for Classification
 
+Instead of demonstrating how to use rpart() or ctree(), I prefer to use the train() from caret. This makes it much easier to test out multiple different methods, as well as automatically vary the tuning parameters such as depth, complexity etc..
 
+train() for ctree
+```{r}
+train.ctree <- train(as.factor(default)~student+balance+income,data=Default,method="ctree")
+plot(train.ctree)
+```
 
+train() for rpart
+```{r}
+train.rpart <- train(as.factor(default)~student+balance+income,data=Default,method="rpart")
+plot(train.rpart)
+```
 
+In train() and through trainControl() you can see that it automatically varies different tuning parameters (see caret documentation for the different options for each method), while defaulting to bootstrap estimation to test out each. This is a great way to prevent overfitting.
 
+In examining both plots, it seems as both methods do comparably well, while also they both have different tuning parameters (X-axis). Based on these plots, I would increase the number of values for the tuning parameters, as the accuracy did not reach a maximum necessarily outside of the tails. (tuneLength = 3 is default)
 
+Finally, what if we try a more advanced, flexible tree algorith, Random Forests?
 
-# What is an Interaction? #
-aka Strobl 2009 problems
+```{r}
+Default$r1 <- rnorm(10000)
+Default$r2 <- rnorm(10000)
+train.rf <- train(as.factor(default) ~.,data=Default,
+                  method="rf",tuneLength=4)
+plot(train.rf)
+
+train.rf$finalModel$importance
+```
+
+You can see the propensity for random forests to overfit by the inclusion and higher importance for two random noise variables added to the dataset
