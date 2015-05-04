@@ -1,0 +1,522 @@
+---
+title: "Intro to SEM and Clustering in R"
+output: pdf_document
+---
+
+R has a number of built-in functions as well as packages available to do latent variable modelling.
+
+To do PCA:
+prcomp() -- built-in
+
+To do EFA:
+factanal() -- builtin
+
+fa() -- from psych; multiple upgrades
+
+efaUnrotate() -- from semTools; can do FIML for missing data and WLSMV for categorical variables
+
+GPA() -- from GPArotation -- one stop shop for factor rotations
+
+CFA:
+cfa() -- from lavaan package
+
+General SEM:
+OpenMx -- can do cfa,sem, mixtures, differential equations...Most general package
+
+lavaan -- modeled after Mplus; can do maybe 80% of the things that Mplus can
+
+We will be using the Holzinger Swineford dataset for all of the examples. Data from lavaan package
+
+```{r,message=FALSE}
+library(lavaan)
+library(OpenMx)
+# can't get OpenMx from CRAN
+#source('http://openmx.psyc.virginia.edu/getOpenMx.R')
+HS <- HolzingerSwineford1939
+#summary(HS)
+#str(HS)
+```
+
+# PCA
+
+```{r}
+pca.out <- prcomp(HS[,7:15])
+#quartz()
+plot(pca.out)
+```
+
+Slightly ambiguous as to the number of components to retain, but we can see that the 3 components with eigenvalues above 1 (Kaiser rule). But in looking at the actual loadings, it almost looks like there is a general component, and maybe a couple specific components. 
+
+The psych package has a PCA function, principal(), which uses the same algorithm, but provides much more helpful output.
+
+```{r,message=FALSE}
+library(psych)
+prin1 <- principal(HS[,7:15])
+loadings(prin1)
+prin2 <- principal(HS[,7:15],2)
+loadings(prin2)
+prin3 <- principal(HS[,7:15],3)
+loadings(prin3)
+prin4 <- principal(HS[,7:15],4)
+loadings(prin4)
+```
+
+Note, PCA always extracts the same number of components as variables entered. But with principal() we have a choice of displaying a specific number of components.
+
+In using PCA, 3 components seems to be a little bit cleaner,where we can see "clusters" in the loadings, than others in the factor structure. But still hazy. With 4 components, the last component is really only made up of 1 variable (loading > 0.9). 
+
+One of the best tools that I know of to determine the number of components(PCA) or factors(EFA) is Horn's parallel analysis from the psych package.
+
+Although called fa.parallel() it extracts both components and factors
+```{r}
+fa.parallel(HS[,7:15])
+```
+Parallel analysis compares the actual eignevalues to the eigenvalues from a simulated dataset of random noise variables. We are looking for the number of eigenvalues above what would be expected by chance. This makes it look pretty clear, both 3 components and factors
+
+# EFA
+
+R has the built-in factanal() which gets the job done in most cases. Defaults to ML estimation and varimax(orthogonal rotation)
+
+```{r}
+fa.out <- factanal(HS[,7:15],3)
+loads <- fa.out$loadings
+# cluster.plot(fa.out)
+# extract loadings and feed to rotation program.
+library(GPArotation)
+gpa.out <- GPFoblq(loads) # oblique rotation
+# new loading matrix
+round(gpa.out$loadings,2)
+# new factor correlations
+gpa.out$Phi
+```
+Fairly clear factor structure. Not many cross-loadings.
+
+Fancy way to plot results, from http://mindingthebrain.blogspot.com/2015/04/plotting-factor-analysis-results.html
+
+Get factor scores:
+```{r}
+fa.out2 <- fa(HS[,7:15],scores="Bartlett")
+fscor <- fa.out2$scores
+head(fscor)
+```
+Not generally advisable to get factor scores as there are a number of inherent problems with them (Grice 2001), but the psych package's fa() has multiple options. see "scores=" option.
+
+
+Want to do full-information maximum likelihood (FIML) with EFA? Have a decent amount of missing data, and can make the assumption it is missing at random (MAR)? The only way to do it in R is efaUnrotate() (probably can do in OpenMx, but I'm not sure how to do it easily with more than 1 factor).
+
+efaUnrotate is a wrapper that is built around lavaan. This means you can use it for FIML, WLSMV, and whatever other options from lavaan you want.
+
+Note: default is to estimate unrotated solution, then use GPArotation to rotate.
+```{r,message=FALSE}
+library(semTools)
+
+efa.fiml <- efaUnrotate(HS[,7:15],3,missing="fiml") # little bit slower
+#summary(efa.fiml)
+rot.out <- oblqRotate(efa.fiml) # quartimin is default, same as GPFoblq()
+#summary(rot.out) # very close to results from fa() and GPFoblq()
+```
+Check out semTools -- a \textit{ton} of great helper functions
+
+# CFA
+
+How about we move to a confirmatory factor analysis framework. Note: this isn't really confirmatory, as we have already looked and tested out multiple factor structures. 
+
+We will do this in both lavaan (very easy to use) and OpenMx (not as easy, but more flexible)
+
+### lavaan
+First lavaan -- which we will use for general SEM later
+
+```{r}
+
+######## basic lavaan syntax #########
+
+# latent variable definition           =~ is measured by
+# regression                           ~ is regressed on
+# (residual) (co)variance             ~~ is correlated (covariance) with
+# intercept (mean)                  ~ 1 intercept   # same as regressed, but with 1
+
+
+
+########## basic regression in R ######
+lm.out = lm(x9 ~ 1 + x1 + x2 + x3,data=HS)   # 1 = intercept
+#summary(lm.out)
+coef(lm.out)
+
+##############################################
+############ Confirmatory Factor Analysis ############
+
+HS.model <- '
+visual =~ x1 + x2 + x3
+textual =~ x4 + x5 + x6
+speed =~ x7 + x8 + x9 '
+
+fit <- cfa(HS.model, data = HS)
+coef(fit)
+
+# get factor scores
+fscor.lav <- predict(fit) # in flux right now -- in manual there is lavPredict()
+
+###################### the cfa() function is a wrapper for the lavaan() function ######
+##### a wraper is just a function that makes assumptions for you, so specify less code ###
+
+# same model using lavaan()
+
+HS.model2 <- '
+visual =~ x1 + x2 + x3
+textual =~ x4 + x5 + x6
+speed =~ x7 + x8 + x9 
+
+# residual variances for each indicator
+x1~~x1
+x2~~x2
+x3~~x3
+x4~~x4
+x5~~x5
+x6~~x6
+x7~~x7
+x8~~x8
+x9~~x9
+
+# factor variances
+visual~~visual
+textual~~textual
+speed~~speed
+
+# factor covariances 
+visual~~textual   # think no covariance between factors? -- visual~~0*textual
+visual~~speed
+textual~~speed
+'
+fit2 <- cfa(HS.model2, data = HS)
+coef(fit2)
+#summary(fit2, fit = TRUE)
+```
+We can see that we get identical parameter estimates across the two equivalent specifications.
+
+
+So what the heck did we create? I find it much more helpful to visual what the model looks like. The "semPlot" package is great -- makes it super easy to visualize SEM models.
+```{r}
+library(semPlot)
+semPaths(fit)
+# dashed lines refer to fixed parameters
+# also
+semPaths(fit,what="est")
+```
+
+## Output Breakdown
+
+Using the summary() function, we get a lot of output, but we will go piece by piece for what it means
+```{r}
+#summary(fit, fit.measures = TRUE)
+#get standardized estimates
+summary(fit, fit = TRUE,std=T)
+```
+
+### Fit
+```{r}
+round(fitMeasures(fit)[c("chisq","df","pvalue","rmsea","tli","cfi")],3)
+# to get all
+# use fitMeasures(fot)
+```
+The $\chi^{2}$ is significant, which means there is a significant amount of misfit (opposite of most p-values,not good). With larger sample sizes, it is almost impossible to get a non-significant $\chi^{2}$. Generally, we are looking for CFA \& TLI > 0.95 and RMSEA > 0.06. We don't quite get this. 
+
+So lets first look at the loadings. We can see the values in the second plot from semPlot
+
+```{r}
+pars <- parameterEstimates(fit)
+pars[pars$op=="=~",]
+```
+Overall, the loadings are pretty high, there aren't any weak loadings. 
+
+Note, in CFA you have to scale the latent variable by either fixing one factor loading (usually to 1), or fix the factor variance. The default in most programs is to fix first factor loading.
+
+In lavaan, if we wanted to change this:
+```{r}
+HS.model <- '
+visual =~ NA*x1 + x2 + x3 # have to override default fix of first factor loading
+textual =~ NA*x4 + x5 + x6
+speed =~ NA*x7 + x8 + x9 
+visual~~1*visual
+textual~~1*textual
+speed~~1*speed'
+```
+
+This results in the exact same level of fit, but the scale of the parameter estimates shift to being standardized.
+
+How about covariances:
+```{r}
+pars <- parameterEstimates(fit)
+# residual variances
+pars[pars$op=="~~",][1:9,]
+# covariance of residuals
+#residuals(fit)
+# factor covariances
+pars[pars$op=="~~",][1:9,]
+```
+Note: "~~" between observed variables refers to residual variance
+"~~" between latent variables are factor variances and covariances
+
+Also note that in lavaan, it is default to allow covariances between latent factors. You can change this in the syntax (factor1~~1*factor1), or set orthogonal=T in cfa().
+
+Although not recommended in some instances, we can use Modification Indices to improve our model fit. Note that modification indices refer to the improvement in the chi-square fit statistic with a change in 1 degree of freedom.
+
+```{r}
+mod = modificationIndices(fit)
+mod[mod$mi > 10 & is.na(mod$mi) ==F,]
+```
+
+From this, it looks like both x7 and x8 might also be a part of the "visual" factor. 
+
+```{r}
+HS.model2 <- '
+visual =~ x1 + x2 + x3 + x7 + x8
+textual =~ x4 + x5 + x6
+speed =~ x7 + x8 + x9 '
+
+fit3 <- cfa(HS.model2, data = HS)
+#summary(fit3, fit.measures = TRUE)
+fitMeasures(fit3)[c("rmsea","tli","cfi")]
+
+```
+
+Now we meet the "recommended" guidelines for fit criteria cutoff.
+
+Anymore big MI's?
+```{r}
+mod2 = modificationIndices(fit2)
+mod2[mod2$mi > 10 & is.na(mod2$mi) ==F,]
+```
+
+One potential change, but in examining the epc (expected parameter change), the value isn't too large. This means that if we added x1 to the textual factor, the expected loading would be 0.306. 
+
+### CFA in OpenMx
+
+How about the same model in OpenMx:
+```{r,message=FALSE,warning=FALSE}
+require(OpenMx)
+dataRaw <- mxData( observed=HS, type="raw" )
+manifests <- c("x1","x2","x3","x4","x5","x6","x7","x8","x9")
+latents <- c("visual","textual","speed")
+# residual variances
+resVars <- mxPath( from=manifests, arrows=2,free=TRUE, values=1)
+# latent variance
+latVar <- mxPath(from=latents, arrows=2,free=T, values=1)
+# latent covariances
+cov1 <- mxPath(from="visual",to="textual",arrows=2,value=1)
+cov2 <- mxPath(from="visual",to="speed",arrows=2,value=1)
+cov3 <- mxPath(from="textual",to="speed",arrows=2,value=1)
+# factor loadings
+facLoads1 <- mxPath( from="visual", to=c("x1","x2","x3"), 
+                     arrows=1,free=c(F,T,T), values=c(1,1,1))
+facLoads2 <- mxPath( from="textual", to=c("x4","x5","x6"), 
+                     arrows=1,free=c(F,T,T), values=c(1,1,1))
+facLoads3 <- mxPath( from="speed", to=c("x7","x8","x9"), 
+                     arrows=1,free=c(F,T,T), values=c(1,1,1))
+# means
+means <- mxPath( from="one", to=c(manifests,latents), arrows=1,
+                 free=c(T,T,T,T,T,T,T,T,T,F,F,F), values=c(1,1,1,1,1,1,1,1,1,0,0,0))
+
+threeFactorModel <- mxModel("Three Factor Model", type="RAM",manifestVars=manifests,
+                            latentVars=latents,dataRaw, resVars, latVar, facLoads1,
+                            facLoads2,facLoads3, means,cov1,cov2,cov3)
+threeRun <- mxRun(threeFactorModel)
+#threeRun <- mxTryHard(threeFactorModel) # don't have to be as close with starting values
+#summary(threeRun)
+
+# fit indices
+factorSat <- mxRefModels(threeRun,run=T)
+#summary(threeRun,refModels=factorSat)
+summary(threeRun,refModels=factorSat)$CFI
+summary(threeRun,refModels=factorSat)$TLI
+summary(threeRun,refModels=factorSat)$RMSEA
+```
+
+Good example of lavaan to OpenMx and how to write code compactly in OpenMx:
+http://industrialcodeworkshop.blogspot.com/2012/10/from-lavaan-to-openmx.html
+
+
+Compare estimates to lavaan (exact same). Note, in OpenMx when you enter raw data, you are forced to specify the mean structure. This is not a requirement in lavaan, but possible with "meanstructure=T"
+
+# Mediation
+
+Mediation in lavaan -- lavaan just added a new operator (":=")
+Example taken from:
+http://lavaan.ugent.be/tutorial/mediation.html
+
+```{r}
+set.seed(1234)
+X <- rnorm(100)
+M <- 0.5*X + rnorm(100)
+Y <- 0.7*M + rnorm(100)
+Data <- data.frame(X = X, Y = Y, M = M)
+model <- ' # direct effect
+             Y ~ c*X
+           # mediator
+             M ~ a*X
+             Y ~ b*M
+           # indirect effect (a*b)
+             ab := a*b
+           # total effect
+             total := c + (a*b)
+         '
+fit.med <- sem(model, data = Data)
+summary(fit.med)
+```
+
+Remove mediator
+```{r}
+med2 <- '
+Y ~ X
+'
+fit.med2 <-  sem(med2,data=Data)
+coef(fit.med2)
+semPaths(fit.med2,what="est")
+```
+
+
+
+What does this look like?
+```{r}
+semPaths(fit.med,what="est")
+```
+
+# General SEM
+
+How about fitting more general SEM? Easy to do with sem() from lavaan. Note, this is again a wrapper for the lavaan().
+
+```{r}
+sem.mod <- '
+f1 =~ x1 + x2 + x3 + x4 + x5 + x6
+f1 ~ school + ageyr
+'
+sem.out <- sem(sem.mod,HS)
+#summary(sem.out,fit=T)
+coef(sem.out)
+```
+Notice the inclusion of the regression of school and ageyr on the factor.
+
+```{r}
+semPaths(sem.out)
+```
+
+Here we get almost identical options for fit and output as we do in CFA. Using sem() it is possible to create a wide variety of models, models that encomposs both CFA, path analysis, mediation etc...
+
+
+# Multiple Group Models \& Invariance
+
+This topic will be covered in more depth later, but as an example here is the code.
+
+```{r}
+HS.group <- '
+visual =~ x1 + x2 + x3
+textual =~ x4 + x5 + x6
+speed =~ x7 + x8 + x9 '
+
+fit.config <- cfa(HS.group, data = HS,group="school")
+fit.metric <- cfa(HS.group, data = HS,group="school",group.equal="loadings")
+fit.strong <- cfa(HS.group, data = HS,group="school",
+                  group.equal=c("loadings","intercepts"))
+fit.strict <- cfa(HS.group, data = HS,group="school",
+                  group.equal=c("loadings","intercepts","residuals"))
+anova(fit.config,fit.metric,fit.strong,fit.strict)
+```
+Note: have categorical indicators? Have to do slightly different specifications. See: 
+http://www.myweb.ttu.edu/spornpra/catInvariance.html
+
+# Clustering
+
+This is a rather brief section. For additional resources, see:
+http://www.statmethods.net/advstats/cluster.html
+http://www.r-tutor.com/gpu-computing/clustering/hierarchical-cluster-analysis
+Ch.10 in Introduction to Statistical Learning
+
+For this, we will be using hclust() from stats package (built-in). The dataset is on the number of arrests per 100,000 residents.
+
+Similar to PCA, it is important to scale the variables beforehand
+```{r}
+library(ISLR) 
+arrests.scale = scale(USArrests)
+hc.s.complete = hclust(dist(arrests.scale), method="complete") 
+plot(hc.s.complete)
+```
+
+This dendrogram is a little big and convoluted, and it is hard to glean any information from.
+
+Similar to decision trees where we can prevent overfitting by pruning, in clustering we can cut off levels of the dendrogram past a certain level. 
+
+with this, we can either cut the tree at a prespecified number of groups:
+```{r}
+cutree(hc.s.complete, k=3)
+table(cutree(hc.s.complete, k = 3))
+```
+In this, we can see that cluster 1 looks mostly like the southern states. Cluster 3 looks someone like the Northwest. Not sure about cluster 2.
+
+
+Or a pre-specified height:
+```{r}
+cutree(hc.s.complete, h=3)
+table(cutree(hc.s.complete, h = 3))
+```
+This changes our answer drastically. This is where domain knowlegdge comes in to play by using this information to cut the dendrogram at the place that gives the most amount of information.
+
+
+# IRT
+
+Item Response Theory in lavaan. This uses weighted least squares estimation with mean and variance adjustment (WLSMV). This is what Mplus defaults to when manifest variables are dichotomous or ordinal.
+
+http://lavaan.ugent.be/tutorial/cat.html
+
+Two ways to specify. Change class() of variables in dataset to 
+
+Example:
+```{r}
+library(psych)
+data(bfi)
+sapply(bfi,class)
+# get same things as
+# str(bfi)
+
+agree <-'
+f1 =~ A1 + A2 + A3 + A4 + A5
+'
+irt.out <- cfa(agree,data=bfi,ordered=c("A1","A2","A3","A4","A5"))
+#summary(irt.out)
+coef(irt.out)
+fitMeasures(irt.out)[c("rmsea","tli","cfi")]
+```
+By changing to categorical, lavaan automatically changes estimator from ML to WLSMV. One of the large benefits to using WLSMV as opposed to marginal maximum likelihood in traditional IRT is that you get fit indices (rmsea, cfi, etc...)
+
+Instead of specifying ordered= , we could have changed the class in the dataframe, and lavaan would have recognized this automatically.
+
+Equivalent:
+```{r}
+bfi[,c("A1","A2","A3","A4","A5")] <- lapply(bfi[,c("A1","A2","A3","A4","A5")],ordered)
+
+agree <-'
+f1 =~ A1 + A2 + A3 + A4 + A5
+'
+irt.out <- cfa(agree,data=bfi)
+#summary(irt.out)
+```
+Now " | " is introduced for thresholds. 
+
+
+In OpenMx, to do a form of IRT you have to follow a different specification. See:
+http://openmx.psyc.virginia.edu/docs/OpenMx/2.0.0-3756/ItemFactorAnalysis.html
+
+and
+
+http://faculty.virginia.edu/humandynamicslab/pubs/PritikinHunterBoker-IFA-2014.pdf
+
+For traditional IRT models in R:
+ltm package --  for unidimensional models
+mirt package -- for multidimensional models
+
+Simple example using the ltm package:
+Using grm() (graded response model) as the data are ordinal (# of cats > 2 and ordered)
+```{r,message=FALSE}
+library(ltm)
+ltm.out <- grm(bfi[,1:5])
+#plot(ltm.out)
+coef(ltm.out)
+```

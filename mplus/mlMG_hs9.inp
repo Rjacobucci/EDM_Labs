@@ -1,0 +1,41 @@
+ TITLE:  BSEM Holzinger 1 fac
+ 
+  DATA:  !file is "/Users/RJacobucci/Dropbox/621/Project/HS.dat";
+  	file = HS.dat;
+
+  VARIABLE:  names are id sex ageyr agemo school grade x1 x2 x3 x4 x5 x6 x7 x8 x9;
+            ! ageyr won't converge
+             usevar are x1 x2 x3 x4 x5 x6 x7 x8 x9;
+             !categorical are sex;
+             missing are all (-99);
+             GROUPING IS sex(1=male 2=female);
+
+  
+  ANALYSIS:
+	ESTIMATOR = ml;
+	PROCESSORS = 2;
+	!CHAINS = 15;
+	!Bconvergence = 0.01;
+	!BITERATIONS = 5000000(200,000);
+	
+	MODEL = CONFIGURAL METRIC;
+
+
+   MODEL: 
+        	   f1 by x1-x3;! x7 x9;
+        	   f2 by x4-x6;! x1;
+        	   f3 by x7-x9;
+        	  ! f1@1; 
+
+
+  
+  OUTPUT: MODINDICES(3.84);
+
+  
+        	   
+        	   
+
+
+
+
+

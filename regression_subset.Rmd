@@ -1,0 +1,496 @@
+---
+title: "Regression in R"
+author: "Ross Jacobucci"
+date: "April 30, 2015"
+output: pdf_document
+---
+
+For linear regression:
+lm() from stats package (built-in)
+For logistic regression:
+glm() from stats package
+
+For lasso and ridge regression:
+glmnet() from glmnet package
+
+Load packages
+```{r,message=FALSE}
+library(glmnet)
+library(QuantPsyc) # for standardized regression coefficients
+library(subselect)
+#library(lars)
+library(tabuSearch)
+```
+
+For more advanced pca/FA
+```{r,message=FALSE}
+library(lavaan) # for HolzingerSwineford1939 dataset
+HS <- HolzingerSwineford1939 
+
+library(elasticnet) # regularized PCA
+library(fanc) # regularized FA
+#library(FAiR) # semi-exploratory factor analysis; only works on Windows
+library(GA) # genetic algorithm for subset selection
+```
+
+http://www.jstatsoft.org/v53/i04/paper
+
+You can also embed plots, for example:
+
+```{r}
+data(diabetes)
+X <- diabetes$x
+Y <- diabetes$y
+```
+
+```{r,results='hide'}
+lm(Y ~ X)
+# note: equivalent to
+lm(y ~ x,data=diabetes)
+# which is equivalent to 
+lm(diabetes$y ~ diabetes$x)
+
+```
+Note, in this dataset, x is essentially a matrix within a dataframe. This is a little unusual, where the typical format would be:
+
+```{r}
+diabetes2 <- data.frame(cbind(Y,X))
+head(diabetes2)
+lm(Y ~ ., data=diabetes2)
+```
+Using the "." means we want to use all variables that aren't the outcome as predictors
+\
+Fun Fact: Can do the same thing with a SEM package
+```{r}
+library(lavaan)
+lm.mod <-'
+Y ~ age + sex + bmi + map + tc + ldl + hdl + tch + ltg + glu
+Y ~ 1 # intercept
+'
+lm.sem <- sem(lm.mod,diabetes2)
+#summary(lm.sem)
+#parameterEstimates(lm.sem)
+coef(lm.sem)
+```
+Exact same answer.
+\
+
+
+```{r}
+lm.out <- lm(y ~ x,data=diabetes)
+#summary(lm.out)
+
+# check assumptions
+#plot(lm.out)
+
+# get standardized coefficients
+lm.beta(lm.out) # from QuantPsyc
+```
+
+So we are doing pretty good, $R^{2}$ of 0.51, with only four significant predictors. So the question we are going to answer today is whether we can get rid of a few predictors and still do a good job of predicting the outcome. Now, there are two + reasons to do this:
+
+1. In future studies, maybe time is of the essence, or each additional question costs a certain amount of money. By reducing the number of questions we have to ask participants, both money and time can be saved. The question is what is the tradeoff, can we reduce the number of scales/items/questionnaires, and still answer the questions we want?
+
+2. Remember when using $R^{2}$ as a criterion, by using more variables as predictors, these can only improve are within sample predictive power. But when we become concerned with generalizability, then in some cases, a reduced number of predictors, only important ones, can generalize better than a larger set of X's. This was somewhat demonstrated in the "preprocessing" lab.
+
+Let's try #2 on the diabetes dataset
+```{r}
+
+ids <- sample(1:nrow(diabetes2), .5*nrow(diabetes2),replace=FALSE)
+diab.train <- diabetes2[ids,]
+diab.test <- diabetes2[-ids,]
+
+lm.trainFull <- lm(Y ~ ., data= diab.train)
+summary(lm.trainFull)$r.squared
+lm.trainSub <- lm(Y ~ sex + bmi + map + ltg, data= diab.train)
+summary(lm.trainSub)$r.squared
+
+pred.full <- predict(lm.trainFull,diab.test)
+pred.sub <- predict(lm.trainSub,diab.test)
+
+cor(pred.full,diab.test$Y)**2
+cor(pred.sub,diab.test$Y)**2
+```
+Not in this case, but let's try some different methods specifically designed for subset selection.
+
+# Subset Selection
+
+First off, why don't we just try out all combination of predictors -- entering them all separately into lm()? Problems:
+
+1. How do we choose. $R^{2}$ can only go up with added predictors (RSS can only go down).
+2. This is usually computationally infeasible, as there are $2^{p}$ possible models, where p is the number of predictors. In our case $2^{10} = 1024$, which is a lot but not too many. 
+
+
+## Stepwise Selection
+
+### Forward
+
+Efficient, but not guaranteed to find best overall model.
+
+```{r,results='hide'}
+library(MASS)
+lmOut <- lm(Y ~ ., data=diab.train)
+stepFor <- stepAIC(lmOut,direction="forward")
+```
+
+```{r}
+stepFor$anova
+
+pred.for<- predict(stepFor,diab.test)
+
+cor(pred.for,diab.test$Y)**2
+```
+AIC (Akaike Information Criterion) induces a penalty for complexity -- meaning that it will try and choose a model that balances predictive accuracy with simplicity (less predictors).
+
+In this example, forward stepwise doesn't suggest getting rid of any predictors
+
+### Backward
+
+```{r,results='hide'}
+library(MASS)
+lmOut <- lm(Y ~ ., data=diab.train)
+stepBack <- stepAIC(lmOut,direction="backward")
+```
+
+```{r}
+stepBack$anova
+
+pred.back<- predict(stepBack,diab.test)
+
+cor(pred.back,diab.test$Y)**2
+```
+
+Here, backwards suggests getting rid of 4 predictors.
+
+## Ridge and Lasso Regression
+- Including a penalty on the $\beta$ parameters, and by varying the penalty we can shrink some of the $\beta's$ to zero, doing a form of "automatic" subset selection.
+
+Althought there a number of packages to do this, maybe the best is \textit{glmnet}
+
+Note, for glmnet, your data has to be set up in two separate matrices. Doing this can be accomplished by:
+```{r}
+YY <- as.matrix(diabetes2$Y)
+XX <- as.matrix(diabetes2[,2:11])
+# or
+XX <- as.matrix(diabetes2[,c("age","sex","bmi","map","tc","ldl","hdl","tch","ltg","glu")])
+
+```
+
+Two things to note:
+1. Because we are doing regression with a continuous outcome, we specify the family(distribution) as "gaussian"
+2. Shrinkage in lasso and ridge is sensitive to the scale of the variables, therefore, it is best to standardize the predictors before entering. glmnet does this by default (look at ?glmnet).
+
+Lasso
+```{r}
+?glmnet
+lasso.out <- glmnet(XX,YY,family="gaussian",alpha=1)
+plot(lasso.out)
+#gaussian for continuous outcomes, "binomial" for categorical
+# alpha=1 is lasso, alpha=0 is ridge
+```
+
+Ridge
+```{r}
+ridge.out <- glmnet(XX,YY,family="gaussian",alpha=0)
+#plot(ridge.out,type.coef="2norm")
+plot(ridge.out)
+```
+
+Since ridge regression does not shrink the $\beta$ coefficients to 0 with increase penalization, it does not do an "automatic" form of subset selection
+
+The problem now becomes, which value of $\lambda$ (amount of shrinkage) do we choose? Using cross-validation is one of the better ways, and is implemented the glmnet package
+
+```{r}
+cv.lasso <- cv.glmnet(XX,YY,family="gaussian",alpha=1)
+plot(cv.lasso)
+```
+
+Two-strategies for selecting $\lambda$: either pick the lowest CV error, or the best solution within 1 standard error.
+\
+I don't think that there is a clear best choice. The one advantage of using the 1SE rule is that you need fewer predictors.In our example 4 instead of 7.
+
+```{r}
+#str(cv.lasso)
+(lmin <- cv.lasso$lambda.min)
+(lminSE <- cv.lasso$lambda.1se)
+
+lasso.out2 = glmnet(XX,YY,family="gaussian",alpha=1,lambda=lminSE)
+lasso.out2
+
+```
+Note that Df correspond to the number of non-zero $\beta's$
+\
+So how are we doing?
+```{r}
+# ?predict.glmnet
+pred.1se <- predict(lasso.out2,XX)
+cor(pred.1se,YY)**2
+```
+
+So with only 4 predictors entered into the model, we only lose 2-3% of our predicted variance($R^{2}$).
+\
+With the lasso, there are two recommended strategies for using the results. 
+1. Taking the predictors with non-zero $\beta's$, and just using that subset in linear regression.
+2. Or, bypass this all together and use least angle regression.
+
+
+"One approach for reducing this bias is to run the lasso to identify the set of non-zero coefficients, and then fit an un-restricted linear model to the selected set of features." p. 91 Hastie et al., 2009
+
+In our case, we will take the predictors with non-zero $\beta's$ and use them with lm() to get our final model. This will probably be our most realistic estimate of $R^{2}$ when caring about generalization, as we are using the test dataset to derive the estimate. 
+
+```{r}
+coef(lasso.out2)
+lm.lasso <- lm(Y ~ bmi + map + hdl + ltg,diab.train)
+lmLas.pred <- predict(lm.lasso,diab.test)
+
+cor(lmLas.pred,diab.test$Y)**2
+```
+
+Try Elastic Net -- from caret
+
+This optimizes both the $\lambda$ and mixing percentage
+```{r,eval=FALSE}
+library(caret)
+XX <- as.matrix(diab.train[,-1])
+YY <- diab.train$Y # important to change class of variable
+enet.out <- train(XX,YY,method="glmnet",tuneLength=8)
+
+row.result <- best(enet.out$results,"Rsquared",maximize=T)
+enet.out$results[row.result,]
+```
+
+# Stochastic Search
+
+Use 3 packages:
+"tabuSearch"
+"leaps"
+"GA" (genetic algorithm, note there is also "genalg")
+
+```{r}
+library(leaps)
+# leaps and bounds
+leaps <- regsubsets(Y ~.,,data=diab.train,nbest=3)
+#summary(leaps)
+# plot a table of models showing variables in each model.
+# models are ordered by the selection statistic.
+plot(leaps,scale="r2")
+# plot statistic by subset size 
+library(car)
+subsets(leaps, statistic="rsq",legend=F)
+# have to press ESC to exit
+```
+Based on this, looks like a subset size of 5 might be best, as we get pretty close to an $R^{2}$ of 0.5
+
+Maybe $R^{2}$ isn't the best, as this doesn't penalize for complexity and will probably not generalize well. In regsubsets() we can use BIC which may help.
+
+```{r}
+summary(leaps)$bic
+subsets(leaps, statistic="bic",legend=F)
+```
+Looks like we get a similar answer, but seem to also have a "clearer" best model
+The 
+
+
+## Genetic Algorithm
+
+An example using the "GA" package to do this:
+http://www.jstatsoft.org/v53/i04/paper
+
+But there is an easier way:
+```{r}
+library(glmulti)
+
+```
+
+Using "GA"
+
+```{r}
+mod <- lm(Y ~ ., diab.train)
+
+x <- model.matrix(mod)[, -1]
+y <- model.response(model.frame(mod))
+
+fitness <- function(string) {
+ inc <- which(string == 1)
+ X <- cbind(1, x[,inc])
+ mod <- lm.fit(X, y)
+ class(mod) <- "lm"
+ -AIC(mod)
+}
+
+GA <- ga("binary", fitness = fitness, nBits = ncol(x),
+         names = colnames(x),monitor=F)
+plot(GA)
+summary(GA)
+summary(GA)$solution
+```
+
+## Tabu Search
+
+An example:
+http://www.r-bloggers.com/finding-the-best-subset-of-a-gam-using-tabu-search-and-visualizing-it-in-r/
+
+```{r}
+library(tabuSearch)
+
+mod <- lm(Y ~ ., diab.train)
+
+x <- model.matrix(mod)[, -1]
+y <- model.response(model.frame(mod))
+
+fitness2 <- function(string) {
+ inc <- which(string == 1)
+ X <- cbind(1, x[,inc])
+ mod <- lm.fit(X, y)
+ class(mod) <- "lm"
+ -AIC(mod) + 100000 # won't take negative
+}
+
+result <- tabuSearch(size = 10, iters = 100,objFunc = fitness2)
+plot(result) #fit margins too large
+summary(result,verbose=T) # 6 predictors
+```
+
+
+## glmulti
+Looks for interactions as well
+```{r}
+library(glmulti)
+# method = "g" for genetic algorithm
+# default fitfunction = "glm"
+multi.out = glmulti(Y ~., data=diab.train,method="g",plotty=F,
+                    report=F,fitfunction="lm",crit="aic")
+#summary(multi.out)
+summary(multi.out)$bestmodel
+```
+
+Now we can take the output and test it out in lm()
+```{r}
+eq = summary(multi.out)$bestmodel
+lm.multi = lm(eq,data=diab.train)
+summary(lm.multi)
+```
+The addition of interactions increases our $R^{2}$ even though our criterion for glmulti was AIC.
+
+## simulated annealing
+
+http://topepo.github.io/caret/SA.html
+
+part of this, other options including GA available:
+http://topepo.github.io/caret/featureselection.html
+
+
+To do, have to install most current version of caret from github. CRAN version doesn't include functions
+
+The great thing about this function is that we can use it for all of the methods in caret (100+).
+
+```{r,eval=FALSE}
+library(devtools)
+devtools::install_github("cran/caret")
+library(caret)
+
+
+ctrl <- safsControl(functions = caretSA)
+obj <- safs(x = diab.train[,-1],
+            y = diab.train$Y,
+            iters = 50,
+            safsControl = ctrl,
+            method = "lm")
+#quartz()
+plot(obj) + theme_bw()
+# should increase the iterations
+```
+
+Use with genetic algorithm:
+http://topepo.github.io/caret/GA.html
+
+Pretty slow
+```{r,eval=FALSE}
+ctrl <- gafsControl(functions = caretGA)
+obj <- gafs(x = diab.train[,-1],
+            y = diab.train$Y,
+            iters = 50,
+            gafsControl = ctrl,
+            method = "lm")
+
+```
+
+# Classification
+
+All of the methods used previously will also work in the classification context in using forms of logistic regression.
+
+### Logistic Regression
+```{r}
+Ybin <- ifelse(diab.train$Y > mean(diab.train$Y),1,0)
+diab.train2 <- diab.train
+diab.train2$Y <- Ybin
+
+# logistic
+glm.out <- glm(Y ~ ., diab.train2,family="binomial")
+#summary(glm.out)
+```
+
+So how well did we do?
+I like using receive operating characteristic (ROC) curves and the area under the curve (AUC) to evaluate results in classification.
+
+For binary outcomes, my favorite way to assess how well I did is using the confusionMatrix() function from caret
+
+sensitivity = true positive
+-- with event AND predicted to have event / having the event
+
+people who respondend AND people predicted to respond / people who respondend
+
+specificity = samples w/o event AND predicted as non-event / samples w/o event
+
+actual non-response AND predicted non-response/ actual non-response
+
+
+false-positive = 1-specificity
+
+
+```{r,message=FALSE}
+library(pROC)
+library(caret)
+
+glm.probs=predict(glm.out,type="response")
+glm.pred=ifelse(glm.probs>0.5,1,0)
+
+
+table(diab.train2$Y,glm.pred)
+confusionMatrix(diab.train2$Y,glm.pred,positive="1") # from caret package
+
+
+rocCurve <- roc(diab.train2$Y,glm.probs)
+auc(rocCurve)
+ci.roc(rocCurve)
+
+
+plot(rocCurve, legacy.axes = TRUE,print.thres=T,print.auc=T)
+```
+
+Try also with elastic net
+
+Regularization in caret package:
+http://topepo.github.io/caret/L1_Regularization.html
+
+```{r}
+XX <- as.matrix(diab.train2[,-1])
+YY <- diab.train2$Y 
+lasLog <- cv.glmnet(XX,YY,family="binomial")
+plot(lasLog)
+
+pred.lasLog <- predict(lasLog, XX, s="lambda.1se",type="response")
+```
+
+How did we do?
+```{r}
+rocCurve2 <- roc(diab.train2$Y,pred.lasLog)
+auc(rocCurve2)
+ci.roc(rocCurve2)
+
+
+plot(rocCurve2, legacy.axes = TRUE,print.thres=T,print.auc=T)
+
+```
+
+We got rid of 6 predictors and only lost 0.01 in the AUC

@@ -1,0 +1,525 @@
+Mplus VERSION 7 (Mac)
+MUTHEN & MUTHEN
+04/26/2015   7:18 PM
+
+INPUT INSTRUCTIONS
+
+    TITLE:  MNLFA Try 2;
+
+    DATA:  file is "/Users/RJacobucci/Dropbox/621/Project/HS.dat";
+   	 !file is "C:/Users/jacobucc/Dropbox/621/Project/HS.dat";
+
+    VARIABLE:  names are id sex ageyr agemo school grade x1 x2 x3 x4 x5 x6 x7 x8 x9;
+
+               usevar are x1 x2 x3 x4 x5 x6 x7 x8 x9 sex ageyr school;
+               !categorical are sex ageyr school;
+               missing are all (-99);
+               CONSTRAINT= sex school ageyr;
+
+     !ANALYSIS:     ESTIMATOR=ml;
+    !	ALGORITHM=integration;
+     MODEL:
+          	   f1 by x1* x2-x9;
+          	   [f1@0];
+          	   !f1 ON sex school ageyr;
+    	   f1 (v);
+    	   f1 BY x1 (L1);
+    	   f1 BY x2 (L2);
+    	   f1 BY x3 (L3);
+     	   f1 BY x4 (L4);
+    	
+     MODEL CONSTRAINT:
+    	NEW (v1 v2 v3 L10*1 L20*1 L30*1 L40*1 L11*0 L12*0 L21*0 L22*0
+         	L31*0 L32*0 L41*0 L42*0);
+    	v = 1*EXP(v1*sex + v2*school + v3*ageyr);
+    	L1 = L10 + L11*sex + L12*school;
+    	L2 = L20 + L21*sex + L22*school;
+    	L3 = L30 + L31*school + L32*ageyr;
+    	L4 = L40 + L41*ageyr + L42*sex;
+
+
+
+
+
+
+
+*** WARNING in MODEL command
+  Variable is uncorrelated with all other variables:  SEX
+*** WARNING in MODEL command
+  Variable is uncorrelated with all other variables:  AGEYR
+*** WARNING in MODEL command
+  Variable is uncorrelated with all other variables:  SCHOOL
+*** WARNING in MODEL command
+  At least one variable is uncorrelated with all other variables in the model.
+  Check that this is what is intended.
+   4 WARNING(S) FOUND IN THE INPUT INSTRUCTIONS
+
+
+
+MNLFA Try 2;
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                         301
+
+Number of dependent variables                                   12
+Number of independent variables                                  0
+Number of continuous latent variables                            1
+
+Observed dependent variables
+
+  Continuous
+   X1          X2          X3          X4          X5          X6
+   X7          X8          X9          SEX         AGEYR       SCHOOL
+
+Continuous latent variables
+   F1
+
+
+Estimator                                                       ML
+Information matrix                                        OBSERVED
+Maximum number of iterations                                  1000
+Convergence criterion                                    0.500D-04
+Maximum number of steepest descent iterations                   20
+Maximum number of iterations for H1                           2000
+Convergence criterion for H1                             0.100D-03
+
+Input data file(s)
+  /Users/RJacobucci/Dropbox/621/Project/HS.dat
+
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of missing data patterns             1
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+
+     PROPORTION OF DATA PRESENT
+
+
+           Covariance Coverage
+              X1            X2            X3            X4            X5
+              ________      ________      ________      ________      ________
+ X1             1.000
+ X2             1.000         1.000
+ X3             1.000         1.000         1.000
+ X4             1.000         1.000         1.000         1.000
+ X5             1.000         1.000         1.000         1.000         1.000
+ X6             1.000         1.000         1.000         1.000         1.000
+ X7             1.000         1.000         1.000         1.000         1.000
+ X8             1.000         1.000         1.000         1.000         1.000
+ X9             1.000         1.000         1.000         1.000         1.000
+ SEX            1.000         1.000         1.000         1.000         1.000
+ AGEYR          1.000         1.000         1.000         1.000         1.000
+ SCHOOL         1.000         1.000         1.000         1.000         1.000
+
+
+           Covariance Coverage
+              X6            X7            X8            X9            SEX
+              ________      ________      ________      ________      ________
+ X6             1.000
+ X7             1.000         1.000
+ X8             1.000         1.000         1.000
+ X9             1.000         1.000         1.000         1.000
+ SEX            1.000         1.000         1.000         1.000         1.000
+ AGEYR          1.000         1.000         1.000         1.000         1.000
+ SCHOOL         1.000         1.000         1.000         1.000         1.000
+
+
+           Covariance Coverage
+              AGEYR         SCHOOL
+              ________      ________
+ AGEYR          1.000
+ SCHOOL         1.000         1.000
+
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+     THE STANDARD ERRORS OF THE MODEL PARAMETER ESTIMATES COULD NOT BE
+     COMPUTED.  THE MODEL MAY NOT BE IDENTIFIED.  CHECK YOUR MODEL.
+     PROBLEM INVOLVING PARAMETER 18.
+
+     THE CONDITION NUMBER IS      -0.874D-06.
+
+
+
+MODEL RESULTS
+
+                    Estimate
+
+ F1       BY
+    X1               999.000
+    X2               999.000
+    X3               999.000
+    X4               999.000
+    X5                 0.777
+    X6                 0.702
+    X7                 0.301
+    X8                 0.358
+    X9                 0.528
+
+ Means
+    SEX                1.515
+    AGEYR             12.997
+    SCHOOL             1.518
+    F1                 0.000
+
+ Intercepts
+    X1                 4.936
+    X2                 6.088
+    X3                 2.250
+    X4                 3.061
+    X5                 4.341
+    X6                 2.186
+    X7                 4.186
+    X8                 5.527
+    X9                 5.374
+
+ Variances
+    SEX                0.250
+    AGEYR              1.100
+    SCHOOL             0.250
+    F1               999.000
+
+ Residual Variances
+    X1                 1.358
+    X2                 1.382
+    X3                 1.275
+    X4                 1.351
+    X5                 1.660
+    X6                 1.196
+    X7                 1.183
+    X8                 1.022
+    X9                 1.015
+
+ New/Additional Parameters
+    V1                 0.303
+    V2                 0.302
+    V3                -1.191
+    L10                0.910
+    L20                0.841
+    L30                0.972
+    L40                0.977
+    L11               -0.132
+    L12               -0.126
+    L21               -0.255
+    L22               -0.236
+    L31               -0.042
+    L32               -0.350
+    L41               -0.300
+    L42               -0.030
+
+
+MODEL COMMAND WITH FINAL ESTIMATES USED AS STARTING VALUES
+
+     f1 BY x1*999 (l1);
+     f1 BY x2*999 (l2);
+     f1 BY x3*999 (l3);
+     f1 BY x4*999 (l4);
+     f1 BY x5*0.77708;
+     f1 BY x6*0.70241;
+     f1 BY x7*0.30082;
+     f1 BY x8*0.35846;
+     f1 BY x9*0.52758;
+
+     [ x1*4.93577 ];
+     [ x2*6.08804 ];
+     [ x3*2.25042 ];
+     [ x4*3.06091 ];
+     [ x5*4.34053 ];
+     [ x6*2.18557 ];
+     [ x7*4.18590 ];
+     [ x8*5.52708 ];
+     [ x9*5.37412 ];
+     [ sex*1.51495 ];
+     [ ageyr*12.99668 ];
+     [ school*1.51827 ];
+     [ f1@0 ];
+
+     x1*1.35837;
+     x2*1.38178;
+     x3*1.27486;
+     x4*1.35066;
+     x5*1.65979;
+     x6*1.19636;
+     x7*1.18314;
+     x8*1.02198;
+     x9*1.01500;
+     sex*0.24978;
+     ageyr*1.09976;
+     school*0.24967;
+     f1*999 (v);
+
+     ! NEW statements in MODEL CONSTRAINT
+     NEW(v1*0.30286);
+     NEW(v2*0.30248);
+     NEW(v3*-1.19111);
+     NEW(l10*0.91031);
+     NEW(l20*0.84128);
+     NEW(l30*0.97216);
+     NEW(l40*0.97655);
+     NEW(l11*-0.13193);
+     NEW(l12*-0.12608);
+     NEW(l21*-0.25479);
+     NEW(l22*-0.23636);
+     NEW(l31*-0.04156);
+     NEW(l32*-0.35041);
+     NEW(l41*-0.29980);
+     NEW(l42*-0.02982);
+
+
+
+
+TECHNICAL 1 OUTPUT
+
+
+     PARAMETER SPECIFICATION
+
+
+           NU
+              X1            X2            X3            X4            X5
+              ________      ________      ________      ________      ________
+      1           1             2             3             4             5
+
+
+           NU
+              X6            X7            X8            X9            SEX
+              ________      ________      ________      ________      ________
+      1           6             7             8             9            10
+
+
+           NU
+              AGEYR         SCHOOL
+              ________      ________
+      1          11            12
+
+
+           LAMBDA
+              F1
+              ________
+ X1                13
+ X2                14
+ X3                15
+ X4                16
+ X5                17
+ X6                18
+ X7                19
+ X8                20
+ X9                21
+ SEX                0
+ AGEYR              0
+ SCHOOL             0
+
+
+           THETA
+              X1            X2            X3            X4            X5
+              ________      ________      ________      ________      ________
+ X1                22
+ X2                 0            23
+ X3                 0             0            24
+ X4                 0             0             0            25
+ X5                 0             0             0             0            26
+ X6                 0             0             0             0             0
+ X7                 0             0             0             0             0
+ X8                 0             0             0             0             0
+ X9                 0             0             0             0             0
+ SEX                0             0             0             0             0
+ AGEYR              0             0             0             0             0
+ SCHOOL             0             0             0             0             0
+
+
+           THETA
+              X6            X7            X8            X9            SEX
+              ________      ________      ________      ________      ________
+ X6                27
+ X7                 0            28
+ X8                 0             0            29
+ X9                 0             0             0            30
+ SEX                0             0             0             0            31
+ AGEYR              0             0             0             0             0
+ SCHOOL             0             0             0             0             0
+
+
+           THETA
+              AGEYR         SCHOOL
+              ________      ________
+ AGEYR             32
+ SCHOOL             0            33
+
+
+           ALPHA
+              F1
+              ________
+      1           0
+
+
+           BETA
+              F1
+              ________
+ F1                 0
+
+
+           PSI
+              F1
+              ________
+ F1                34
+
+
+     PARAMETER SPECIFICATION FOR THE ADDITIONAL PARAMETERS
+
+
+           New/Additional Parameters
+              V1            V2            V3            L10           L20
+              ________      ________      ________      ________      ________
+ 1                 35            36            37            38            39
+
+
+           New/Additional Parameters
+              L30           L40           L11           L12           L21
+              ________      ________      ________      ________      ________
+ 1                 40            41            42            43            44
+
+
+           New/Additional Parameters
+              L22           L31           L32           L41           L42
+              ________      ________      ________      ________      ________
+ 1                 45            46            47            48            49
+
+
+     STARTING VALUES
+
+
+           NU
+              X1            X2            X3            X4            X5
+              ________      ________      ________      ________      ________
+      1         4.936         6.088         2.250         3.061         4.341
+
+
+           NU
+              X6            X7            X8            X9            SEX
+              ________      ________      ________      ________      ________
+      1         2.186         4.186         5.527         5.374         0.000
+
+
+           NU
+              AGEYR         SCHOOL
+              ________      ________
+      1         0.000         0.000
+
+
+           LAMBDA
+              F1
+              ________
+ X1             0.815
+ X2             0.515
+ X3             0.592
+ X4             0.680
+ X5             0.769
+ X6             0.687
+ X7             0.314
+ X8             0.335
+ X9             0.521
+ SEX            0.000
+ AGEYR          0.000
+ SCHOOL         0.000
+
+
+           THETA
+              X1            X2            X3            X4            X5
+              ________      ________      ________      ________      ________
+ X1             0.681
+ X2             0.000         0.693
+ X3             0.000         0.000         0.640
+ X4             0.000         0.000         0.000         0.678
+ X5             0.000         0.000         0.000         0.000         0.833
+ X6             0.000         0.000         0.000         0.000         0.000
+ X7             0.000         0.000         0.000         0.000         0.000
+ X8             0.000         0.000         0.000         0.000         0.000
+ X9             0.000         0.000         0.000         0.000         0.000
+ SEX            0.000         0.000         0.000         0.000         0.000
+ AGEYR          0.000         0.000         0.000         0.000         0.000
+ SCHOOL         0.000         0.000         0.000         0.000         0.000
+
+
+           THETA
+              X6            X7            X8            X9            SEX
+              ________      ________      ________      ________      ________
+ X6             0.600
+ X7             0.000         0.594
+ X8             0.000         0.000         0.513
+ X9             0.000         0.000         0.000         0.509
+ SEX            0.000         0.000         0.000         0.000         0.125
+ AGEYR          0.000         0.000         0.000         0.000         0.000
+ SCHOOL         0.000         0.000         0.000         0.000         0.000
+
+
+           THETA
+              AGEYR         SCHOOL
+              ________      ________
+ AGEYR          0.552
+ SCHOOL         0.000         0.125
+
+
+           ALPHA
+              F1
+              ________
+      1         0.000
+
+
+           BETA
+              F1
+              ________
+ F1             0.000
+
+
+           PSI
+              F1
+              ________
+ F1             0.050
+
+
+     STARTING VALUES FOR THE ADDITIONAL PARAMETERS
+
+
+           New/Additional Parameters
+              V1            V2            V3            L10           L20
+              ________      ________      ________      ________      ________
+ 1              0.500         0.500         0.500         1.000         1.000
+
+
+           New/Additional Parameters
+              L30           L40           L11           L12           L21
+              ________      ________      ________      ________      ________
+ 1              1.000         1.000         0.000         0.000         0.000
+
+
+           New/Additional Parameters
+              L22           L31           L32           L41           L42
+              ________      ________      ________      ________      ________
+ 1              0.000         0.000         0.000         0.000         0.000
+
+
+     Beginning Time:  19:18:40
+        Ending Time:  19:18:48
+       Elapsed Time:  00:00:08
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2012 Muthen & Muthen

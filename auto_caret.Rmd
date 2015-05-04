@@ -1,0 +1,67 @@
+---
+title: "Untitled"
+author: "Ross Jacobucci"
+date: "October 12, 2014"
+output: pdf_document
+---
+
+Try and automate data mining
+
+```{r}
+library(caret)
+library(mlbench)
+library(ggplot2)
+data(Sonar)
+str(Sonar)
+
+inTraining <- createDataPartition(Sonar$Class, p = 0.75, list = FALSE)
+training <- Sonar[inTraining, ]
+testing <- Sonar[-inTraining, ]
+
+```
+
+http://topepo.github.io/caret/training.html#pred
+
+```{r}
+#specify method list
+methods <- list()
+methods <- c("glmnet","rpart","ctree","knn","nnet")
+
+
+
+# function
+auto.caret <- function(methods,trainData,testData,tune.n){
+    n.methods <- length(methods)
+    res <- list()
+
+        for(i in 1:n.methods){
+            res$trainRes[[i]] <- train(Class ~ ., trainData, method=methods[i],
+                                      tuneLength=tune.n)
+        }
+
+    
+            resamp.list <- noquote(methods)
+            res$resamp <- resamples(res$train,modelNames=methods)
+
+
+        for(i in 1:n.methods){
+            pred <- predict(res$trainRes[[i]],testData)
+            res$testAcc[i]<- confusionMatrix(data = pred, testData$Class)$overall[1]
+        }
+
+  res
+}
+
+# run
+out <- auto.caret(methods=methods,trainData=training,testData=testing,tune.n=5)
+
+
+plot(out$trainRes[[4]],main=methods[4])
+qplot(x=methods,y=out$testAcc)
+bwplot(out$resamp, layout = c(3, 1))
+dotplot(out$resamp, metric = "Accuracy")
+
+
+
+```
+

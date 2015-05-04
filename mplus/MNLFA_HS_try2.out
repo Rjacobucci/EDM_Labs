@@ -1,0 +1,264 @@
+Mplus VERSION 7 (Mac)
+MUTHEN & MUTHEN
+04/26/2015   5:33 PM
+
+INPUT INSTRUCTIONS
+
+    TITLE:  MNLFA Try 2;
+
+    DATA:  file is "/Users/RJacobucci/Dropbox/621/Project/HS.dat";
+   	 !file is "C:/Users/jacobucc/Dropbox/621/Project/HS.dat";
+
+    VARIABLE:  names are id sex ageyr agemo school grade x1 x2 x3 x4 x5 x6 x7 x8 x9;
+
+               usevar are x1 x2 x3 x4 x5 x6 x7 x8 x9 sex ageyr school;
+               !categorical are sex ageyr school;
+               missing are all (-99);
+               CONSTRAINT= sex school ageyr;
+
+     !ANALYSIS:     ESTIMATOR=ml;
+    !	ALGORITHM=integration;
+     MODEL:
+          	   f1 by x1* x2-x9;
+          	   [f1@0];
+          	   f1 ON sex school ageyr;
+    	   f1 (v);
+    	   f1 BY x1 (L1);
+    	   f1 BY x2 (L2);
+    	   f1 BY x3 (L3);
+     	   f1 BY x4 (L4);
+    	   x1 ON sex school;
+    	   x2 ON sex school;
+               x3 ON school ageyr;
+    	   x4 ON ageyr sex;
+    	
+
+     MODEL CONSTRAINT:
+    	NEW (v1 v2 v3 L10*1 L20*1 L30*1 L40*1 L11*0 L12*0 L21*0 L22*0
+         	L31*0 L32*0 L41*0 L42*0);
+    	v = 1*EXP(v1*sex + v2*school + v3*ageyr);
+    	L1 = L10 + L11*sex + L12*school;
+    	L2 = L20 + L21*sex + L22*school;
+    	L3 = L30 + L31*school + L32*ageyr;
+    	L4 = L40 + L41*ageyr + L42*sex;
+
+
+
+
+
+
+
+INPUT READING TERMINATED NORMALLY
+
+
+
+MNLFA Try 2;
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                         301
+
+Number of dependent variables                                    9
+Number of independent variables                                  3
+Number of continuous latent variables                            1
+
+Observed dependent variables
+
+  Continuous
+   X1          X2          X3          X4          X5          X6
+   X7          X8          X9
+
+Observed independent variables
+   SEX         AGEYR       SCHOOL
+
+Continuous latent variables
+   F1
+
+
+Estimator                                                       ML
+Information matrix                                        OBSERVED
+Maximum number of iterations                                  1000
+Convergence criterion                                    0.500D-04
+Maximum number of steepest descent iterations                   20
+Maximum number of iterations for H1                           2000
+Convergence criterion for H1                             0.100D-03
+
+Input data file(s)
+  /Users/RJacobucci/Dropbox/621/Project/HS.dat
+
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of missing data patterns             1
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+
+     PROPORTION OF DATA PRESENT
+
+
+           Covariance Coverage
+              X1            X2            X3            X4            X5
+              ________      ________      ________      ________      ________
+ X1             1.000
+ X2             1.000         1.000
+ X3             1.000         1.000         1.000
+ X4             1.000         1.000         1.000         1.000
+ X5             1.000         1.000         1.000         1.000         1.000
+ X6             1.000         1.000         1.000         1.000         1.000
+ X7             1.000         1.000         1.000         1.000         1.000
+ X8             1.000         1.000         1.000         1.000         1.000
+ X9             1.000         1.000         1.000         1.000         1.000
+ SEX            1.000         1.000         1.000         1.000         1.000
+ AGEYR          1.000         1.000         1.000         1.000         1.000
+ SCHOOL         1.000         1.000         1.000         1.000         1.000
+
+
+           Covariance Coverage
+              X6            X7            X8            X9            SEX
+              ________      ________      ________      ________      ________
+ X6             1.000
+ X7             1.000         1.000
+ X8             1.000         1.000         1.000
+ X9             1.000         1.000         1.000         1.000
+ SEX            1.000         1.000         1.000         1.000         1.000
+ AGEYR          1.000         1.000         1.000         1.000         1.000
+ SCHOOL         1.000         1.000         1.000         1.000         1.000
+
+
+           Covariance Coverage
+              AGEYR         SCHOOL
+              ________      ________
+ AGEYR          1.000
+ SCHOOL         1.000         1.000
+
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+
+
+MODEL FIT INFORMATION
+
+Number of Free Parameters                       49
+
+Loglikelihood
+
+          H0 Value                       -3809.451
+
+Information Criteria
+
+          Akaike (AIC)                    9444.103
+          Bayesian (BIC)                  9625.751
+          Sample-Size Adjusted BIC        9470.351
+            (n* = (n + 2) / 24)
+
+
+
+MODEL RESULTS
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+ F1       BY
+    X1               999.000      0.000    999.000    999.000
+    X2               999.000      0.000    999.000    999.000
+    X3               999.000      0.000    999.000    999.000
+    X4               999.000      0.000    999.000    999.000
+    X5                 0.711      0.514      1.382      0.167
+    X6                 0.600      0.436      1.378      0.168
+    X7                 0.113      0.092      1.232      0.218
+    X8                 0.127      0.099      1.285      0.199
+    X9                 0.197      0.147      1.340      0.180
+
+ F1       ON
+    SEX                0.041      0.192      0.214      0.831
+    SCHOOL            -0.723      0.537     -1.345      0.179
+    AGEYR             -0.213      0.168     -1.266      0.206
+
+ X1       ON
+    SEX                0.035      0.361      0.097      0.923
+    SCHOOL             0.527      0.364      1.449      0.147
+
+ X2       ON
+    SEX               -0.119      0.381     -0.311      0.755
+    SCHOOL            -0.371      0.401     -0.926      0.354
+
+ X3       ON
+    SCHOOL             0.036      0.440      0.082      0.934
+    AGEYR              0.199      0.199      0.998      0.318
+
+ X4       ON
+    AGEYR              0.101      0.142      0.712      0.476
+    SEX                0.320      0.254      1.256      0.209
+
+ Intercepts
+    X1                 5.494      0.812      6.764      0.000
+    X2                 7.465      0.893      8.361      0.000
+    X3                 0.448      2.335      0.192      0.848
+    X4                 3.694      1.829      2.019      0.043
+    X5                 7.042      0.904      7.786      0.000
+    X6                 4.467      0.764      5.851      0.000
+    X7                 4.615      0.221     20.839      0.000
+    X8                 6.010      0.221     27.136      0.000
+    X9                 6.123      0.289     21.218      0.000
+    F1                 0.000      0.000    999.000    999.000
+
+ Residual Variances
+    X1                 1.049      0.089     11.725      0.000
+    X2                 1.281      0.105     12.181      0.000
+    X3                 1.088      0.090     12.072      0.000
+    X4                 0.369      0.046      8.084      0.000
+    X5                 0.480      0.058      8.283      0.000
+    X6                 0.355      0.042      8.399      0.000
+    X7                 1.153      0.094     12.223      0.000
+    X8                 0.984      0.081     12.196      0.000
+    X9                 0.924      0.076     12.090      0.000
+    F1               999.000      0.000    999.000    999.000
+
+ New/Additional Parameters
+    V1                 0.147      0.203      0.722      0.470
+    V2                -0.091      0.203     -0.450      0.653
+    V3                 0.050      0.109      0.465      0.642
+    L10                0.187      0.232      0.807      0.420
+    L20                0.225      0.266      0.845      0.398
+    L30               -0.078      0.546     -0.143      0.886
+    L40                0.257      0.409      0.627      0.531
+    L11                0.070      0.102      0.683      0.495
+    L12                0.050      0.097      0.523      0.601
+    L21                0.048      0.099      0.482      0.630
+    L22               -0.083      0.112     -0.736      0.462
+    L31               -0.170      0.156     -1.088      0.277
+    L32                0.043      0.055      0.783      0.433
+    L41                0.026      0.041      0.643      0.520
+    L42                0.028      0.067      0.412      0.680
+
+
+QUALITY OF NUMERICAL RESULTS
+
+     Condition Number for the Information Matrix              0.951E-07
+       (ratio of smallest to largest eigenvalue)
+
+
+     Beginning Time:  17:33:22
+        Ending Time:  17:33:37
+       Elapsed Time:  00:00:15
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2012 Muthen & Muthen

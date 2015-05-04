@@ -1,0 +1,274 @@
+Mplus VERSION 7 (Mac)
+MUTHEN & MUTHEN
+04/27/2015   2:31 PM
+
+INPUT INSTRUCTIONS
+
+   TITLE:  BSEM Holzinger 1 fac
+
+    DATA:  !file is "/Users/RJacobucci/Dropbox/621/Project/HS.dat";
+    	file = HS.dat;
+
+    VARIABLE:  names are id sex ageyr agemo school grade x1 x2 x3 x4 x5 x6 x7 x8 x9;
+              ! ageyr won't converge
+               usevar are x1 x2 x3 x4 x5 x6 x7 x8 x9;
+               !categorical are sex;
+               missing are all (-99);
+
+
+    ANALYSIS:
+  	ESTIMATOR = ml;
+  	PROCESSORS = 2;
+  	!CHAINS = 15;
+  	!Bconvergence = 0.01;
+  	!BITERATIONS = 5000000(200,000);
+
+
+     MODEL:
+          	   f1 by x1-x3 x7 x9;
+          	   f2 by x4-x6 x1;
+          	   f3 by x7-x9;
+          	  ! f1@1;
+
+
+    OUTPUT: MODINDICES(3.84);
+
+
+          	
+          	
+
+
+
+
+
+
+
+
+INPUT READING TERMINATED NORMALLY
+
+
+
+BSEM Holzinger 1 fac
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                         301
+
+Number of dependent variables                                    9
+Number of independent variables                                  0
+Number of continuous latent variables                            3
+
+Observed dependent variables
+
+  Continuous
+   X1          X2          X3          X4          X5          X6
+   X7          X8          X9
+
+Continuous latent variables
+   F1          F2          F3
+
+
+Estimator                                                       ML
+Information matrix                                        OBSERVED
+Maximum number of iterations                                  1000
+Convergence criterion                                    0.500D-04
+Maximum number of steepest descent iterations                   20
+Maximum number of iterations for H1                           2000
+Convergence criterion for H1                             0.100D-03
+
+Input data file(s)
+  HS.dat
+
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+     Number of missing data patterns             1
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+
+     PROPORTION OF DATA PRESENT
+
+
+           Covariance Coverage
+              X1            X2            X3            X4            X5
+              ________      ________      ________      ________      ________
+ X1             1.000
+ X2             1.000         1.000
+ X3             1.000         1.000         1.000
+ X4             1.000         1.000         1.000         1.000
+ X5             1.000         1.000         1.000         1.000         1.000
+ X6             1.000         1.000         1.000         1.000         1.000
+ X7             1.000         1.000         1.000         1.000         1.000
+ X8             1.000         1.000         1.000         1.000         1.000
+ X9             1.000         1.000         1.000         1.000         1.000
+
+
+           Covariance Coverage
+              X6            X7            X8            X9
+              ________      ________      ________      ________
+ X6             1.000
+ X7             1.000         1.000
+ X8             1.000         1.000         1.000
+ X9             1.000         1.000         1.000         1.000
+
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+
+
+MODEL FIT INFORMATION
+
+Number of Free Parameters                       33
+
+Loglikelihood
+
+          H0 Value                       -3712.857
+          H1 Value                       -3695.092
+
+Information Criteria
+
+          Akaike (AIC)                    7491.714
+          Bayesian (BIC)                  7614.049
+          Sample-Size Adjusted BIC        7509.391
+            (n* = (n + 2) / 24)
+
+Chi-Square Test of Model Fit
+
+          Value                             35.530
+          Degrees of Freedom                    21
+          P-Value                           0.0247
+
+RMSEA (Root Mean Square Error Of Approximation)
+
+          Estimate                           0.048
+          90 Percent C.I.                    0.017  0.074
+          Probability RMSEA <= .05           0.516
+
+CFI/TLI
+
+          CFI                                0.984
+          TLI                                0.972
+
+Chi-Square Test of Model Fit for the Baseline Model
+
+          Value                            918.852
+          Degrees of Freedom                    36
+          P-Value                           0.0000
+
+SRMR (Standardized Root Mean Square Residual)
+
+          Value                              0.029
+
+
+
+MODEL RESULTS
+
+                                                    Two-Tailed
+                    Estimate       S.E.  Est./S.E.    P-Value
+
+ F1       BY
+    X1                 1.000      0.000    999.000    999.000
+    X2                 0.780      0.143      5.462      0.000
+    X3                 1.026      0.162      6.339      0.000
+    X7                -0.389      0.160     -2.425      0.015
+    X9                 0.460      0.111      4.156      0.000
+
+ F2       BY
+    X4                 1.000      0.000    999.000    999.000
+    X5                 1.111      0.065     17.141      0.000
+    X6                 0.921      0.056     16.490      0.000
+    X1                 0.256      0.072      3.561      0.000
+
+ F3       BY
+    X7                 1.000      0.000    999.000    999.000
+    X8                 0.861      0.148      5.810      0.000
+    X9                 0.590      0.105      5.606      0.000
+
+ F2       WITH
+    F1                 0.212      0.066      3.208      0.001
+
+ F3       WITH
+    F1                 0.232      0.083      2.794      0.005
+    F2                 0.227      0.073      3.120      0.002
+
+ Intercepts
+    X1                 4.936      0.067     73.473      0.000
+    X2                 6.088      0.068     89.855      0.000
+    X3                 2.250      0.065     34.579      0.000
+    X4                 3.061      0.067     45.694      0.000
+    X5                 4.341      0.074     58.452      0.000
+    X6                 2.186      0.063     34.667      0.000
+    X7                 4.186      0.063     66.766      0.000
+    X8                 5.527      0.058     94.855      0.000
+    X9                 5.374      0.058     92.547      0.000
+
+ Variances
+    F1                 0.511      0.115      4.434      0.000
+    F2                 0.984      0.112      8.757      0.000
+    F3                 0.710      0.177      4.013      0.000
+
+ Residual Variances
+    X1                 0.674      0.089      7.614      0.000
+    X2                 1.071      0.101     10.563      0.000
+    X3                 0.736      0.094      7.826      0.000
+    X4                 0.367      0.048      7.665      0.000
+    X5                 0.445      0.058      7.712      0.000
+    X6                 0.361      0.043      8.318      0.000
+    X7                 0.577      0.111      5.205      0.000
+    X8                 0.496      0.077      6.430      0.000
+    X9                 0.534      0.060      8.875      0.000
+
+
+QUALITY OF NUMERICAL RESULTS
+
+     Condition Number for the Information Matrix              0.276E-02
+       (ratio of smallest to largest eigenvalue)
+
+
+MODEL MODIFICATION INDICES
+
+NOTE:  Modification indices for direct effects of observed dependent variables
+regressed on covariates may not be included.  To include these, request
+MODINDICES (ALL).
+
+Minimum M.I. value for printing the modification index     3.840
+
+                            M.I.     E.P.C.  Std E.P.C.  StdYX E.P.C.
+
+BY Statements
+
+F1       BY X5              4.766    -0.193     -0.138       -0.107
+
+WITH Statements
+
+X5       WITH X3            7.035    -0.121     -0.121       -0.211
+X6       WITH X4            4.914    -0.195     -0.195       -0.536
+X7       WITH X4            8.203     0.112      0.112        0.243
+X7       WITH X5            4.220    -0.089     -0.089       -0.175
+X8       WITH X4            5.147    -0.079     -0.079       -0.185
+
+
+     Beginning Time:  14:31:32
+        Ending Time:  14:31:32
+       Elapsed Time:  00:00:00
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2012 Muthen & Muthen

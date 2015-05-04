@@ -1,0 +1,211 @@
+Mplus VERSION 7 (Mac)
+MUTHEN & MUTHEN
+04/27/2015   2:20 PM
+
+INPUT INSTRUCTIONS
+
+   TITLE:  BSEM Holzinger 1 fac
+
+    DATA:  !file is "/Users/RJacobucci/Dropbox/621/Project/HS.dat";
+    	file = HS.dat;
+
+    VARIABLE:  names are id sex ageyr agemo school grade x1 x2 x3 x4 x5 x6 x7 x8 x9;
+              ! ageyr won't converge
+               usevar are x1 x2 x3 x4 x5 x6 x7 x8 x9;
+               !categorical are sex;
+               missing are all (-99);
+
+
+    ANALYSIS:
+  	ESTIMATOR = BAYES;
+  	PROCESSORS = 2;
+  	CHAINS = 15;
+  	Bconvergence = 0.01;
+  	BITERATIONS = 5000000(200,000);
+
+
+     MODEL:
+          	   f1 by x1@1 x2-x9* (l1-l9);
+          	  ! f1@1;
+
+
+    ! MODEL PRIORS:
+    ! 	l2 - l9 ~ N(0,0.5);
+
+
+          	
+          	
+
+
+
+
+
+
+
+
+INPUT READING TERMINATED NORMALLY
+
+
+
+BSEM Holzinger 1 fac
+
+SUMMARY OF ANALYSIS
+
+Number of groups                                                 1
+Number of observations                                         301
+
+Number of dependent variables                                    9
+Number of independent variables                                  0
+Number of continuous latent variables                            1
+
+Observed dependent variables
+
+  Continuous
+   X1          X2          X3          X4          X5          X6
+   X7          X8          X9
+
+Continuous latent variables
+   F1
+
+
+Estimator                                                    BAYES
+Specifications for Bayesian Estimation
+  Point estimate                                            MEDIAN
+  Number of Markov chain Monte Carlo (MCMC) chains              15
+  Random seed for the first chain                                0
+  Starting value information                           UNPERTURBED
+  Treatment of categorical mediator                         LATENT
+  Algorithm used for Markov chain Monte Carlo           GIBBS(PX1)
+  Convergence criterion                                  0.100D-01
+  Maximum number of iterations                             5000000
+  K-th iteration used for thinning                               1
+
+Input data file(s)
+  HS.dat
+Input data format  FREE
+
+
+SUMMARY OF DATA
+
+
+
+COVARIANCE COVERAGE OF DATA
+
+Minimum covariance coverage value   0.100
+
+     Number of missing data patterns             1
+
+
+     PROPORTION OF DATA PRESENT
+
+
+           Covariance Coverage
+              X1            X2            X3            X4            X5
+              ________      ________      ________      ________      ________
+ X1             1.000
+ X2             1.000         1.000
+ X3             1.000         1.000         1.000
+ X4             1.000         1.000         1.000         1.000
+ X5             1.000         1.000         1.000         1.000         1.000
+ X6             1.000         1.000         1.000         1.000         1.000
+ X7             1.000         1.000         1.000         1.000         1.000
+ X8             1.000         1.000         1.000         1.000         1.000
+ X9             1.000         1.000         1.000         1.000         1.000
+
+
+           Covariance Coverage
+              X6            X7            X8            X9
+              ________      ________      ________      ________
+ X6             1.000
+ X7             1.000         1.000
+ X8             1.000         1.000         1.000
+ X9             1.000         1.000         1.000         1.000
+
+
+
+THE MODEL ESTIMATION TERMINATED NORMALLY
+
+     USE THE FBITERATIONS OPTION TO INCREASE THE NUMBER OF ITERATIONS BY A FACTOR
+     OF AT LEAST TWO TO CHECK CONVERGENCE AND THAT THE PSR VALUE DOES NOT INCREASE.
+
+
+
+MODEL FIT INFORMATION
+
+Number of Free Parameters                              27
+
+Bayesian Posterior Predictive Checking using Chi-Square
+
+          95% Confidence Interval for the Difference Between
+          the Observed and the Replicated Chi-Square Values
+
+                                261.119           312.882
+
+          Posterior Predictive P-Value              0.000
+
+Information Criterion
+
+          Deviance (DIC)                         7756.544
+          Estimated Number of Parameters (pD)      24.888
+          Bayesian (BIC)                         7858.326
+
+
+
+MODEL RESULTS
+
+                                Posterior  One-Tailed         95% C.I.
+                    Estimate       S.D.      P-Value   Lower 2.5%  Upper 2.5%  Significance
+
+ F1       BY
+    X1                 1.000       0.000      0.000       1.000       1.000
+    X2                 0.594       0.218      0.000       0.258       1.106      *
+    X3                 0.572       0.206      0.000       0.252       1.049      *
+    X4                 2.277       0.541      0.000       1.686       3.692      *
+    X5                 2.513       0.604      0.000       1.850       4.091      *
+    X6                 2.121       0.504      0.000       1.564       3.440      *
+    X7                 0.455       0.195      0.002       0.148       0.910      *
+    X8                 0.467       0.182      0.001       0.181       0.889      *
+    X9                 0.709       0.214      0.000       0.410       1.231      *
+
+ Intercepts
+    X1                 4.934       0.067      0.000       4.804       5.065      *
+    X2                 6.087       0.068      0.000       5.953       6.222      *
+    X3                 2.250       0.066      0.000       2.121       2.379      *
+    X4                 3.058       0.067      0.000       2.928       3.191      *
+    X5                 4.337       0.074      0.000       4.193       4.484      *
+    X6                 2.183       0.063      0.000       2.059       2.308      *
+    X7                 4.185       0.064      0.000       4.060       4.310      *
+    X8                 5.527       0.059      0.000       5.411       5.642      *
+    X9                 5.373       0.059      0.000       5.258       5.488      *
+
+ Variances
+    F1                 0.189       0.069      0.000       0.072       0.344      *
+
+ Residual Variances
+    X1                 1.131       0.099      0.000       0.959       1.347      *
+    X2                 1.337       0.112      0.000       1.141       1.579      *
+    X3                 1.233       0.103      0.000       1.053       1.455      *
+    X4                 0.388       0.049      0.000       0.300       0.493      *
+    X5                 0.490       0.061      0.000       0.381       0.619      *
+    X6                 0.363       0.045      0.000       0.282       0.459      *
+    X7                 1.162       0.096      0.000       0.993       1.370      *
+    X8                 0.996       0.083      0.000       0.850       1.177      *
+    X9                 0.936       0.079      0.000       0.798       1.108      *
+
+
+     Beginning Time:  14:20:00
+        Ending Time:  14:20:10
+       Elapsed Time:  00:00:10
+
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2012 Muthen & Muthen

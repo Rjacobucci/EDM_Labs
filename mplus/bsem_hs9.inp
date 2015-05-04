@@ -1,0 +1,36 @@
+ TITLE:  BSEM Holzinger 1 fac
+ 
+  DATA:  !file is "/Users/RJacobucci/Dropbox/621/Project/HS.dat";
+  	file = HS.dat;
+
+  VARIABLE:  names are id sex ageyr agemo school grade x1 x2 x3 x4 x5 x6 x7 x8 x9;
+            ! ageyr won't converge
+             usevar are x1 x2 x3 x4 x5 x6 x7 x8 x9;
+             !categorical are sex;
+             missing are all (-99);
+
+  
+  ANALYSIS:
+	ESTIMATOR = BAYES;
+	PROCESSORS = 2;
+	CHAINS = 15;
+	Bconvergence = 0.01;
+	BITERATIONS = 5000000(200,000);
+
+
+   MODEL: 
+        	   f1 by x1@1 x2-x9* (l1-l9);
+        	  ! f1@1; 
+
+  
+  ! MODEL PRIORS:
+  ! 	l2 - l9 ~ N(0,0.5);
+
+  
+        	   
+        	   
+
+
+
+
+

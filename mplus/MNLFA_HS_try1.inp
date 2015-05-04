@@ -1,0 +1,15 @@
+  TITLE:  MNLFA Try 1
+ 
+  DATA:  file is "/Users/RJacobucci/Dropbox/621/Project/HS.dat";
+
+  VARIABLE:  names are id sex ageyr agemo school grade x1 x2 x3 x4 x5 x6 x7 x8 x9;
+            
+             usevar are x1 x2 x3 x4 x5 x6 x7 x8 x9;
+             !categorical are sex;
+             missing are all (-99);
+   MODEL: 
+        	   f1 by x1-x9;
+
+
+
+
