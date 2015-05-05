@@ -178,7 +178,7 @@ cor(pred.lmTest,Boston.test$medv)**2
 ```
 Note: we are taking our lm object trained on the train dataset, and using these fixed coefficients to predict values on the test dataset.\
 \
-In SEM, this is referred to as a tight replication strategy -- Bentler\
+In SEM, this is referred to as a tight replication strategy
 No difference in using a test dataset -- both Rsq are 0.74\
 \
 How about with rpart?

@@ -22,13 +22,13 @@ library(subselect)
 library(tabuSearch)
 ```
 
-For more advanced pca/FA
+Additionally
 ```{r,message=FALSE}
 library(lavaan) # for HolzingerSwineford1939 dataset
 HS <- HolzingerSwineford1939 
 
 library(elasticnet) # regularized PCA
-library(fanc) # regularized FA
+#library(fanc) # regularized FA
 #library(FAiR) # semi-exploratory factor analysis; only works on Windows
 library(GA) # genetic algorithm for subset selection
 ```
