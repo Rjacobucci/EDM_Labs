@@ -1,7 +1,5 @@
 ---
 title: "Decision Trees"
-author: "Ross Jacobucci"
-date: "March 27, 2015"
 output: pdf_document
 ---
 

@@ -1,7 +1,5 @@
 ---
-title: "Regression in R"
-author: "Ross Jacobucci"
-date: "April 30, 2015"
+title: "Regression Subset Selection in R"
 output: pdf_document
 ---
 
