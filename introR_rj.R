@@ -12,8 +12,6 @@ install.packages('psych')
 install.packages("mirt")
 
 ### there is a way to automatically load packages each time you open up R,
-### however it is somewhat complicated -- ask me or email if you want instructions
-
 
 # how to load packages that are already installed --won't work if not installed
 library(psych) # also can do
@@ -57,7 +55,7 @@ plot # or just type function
 
 # list arguments within a function
 args(describe)  
-
+formals(describe)
 # when an argument does not have an "=" with it, it means it is mandatory to specify. 
 # When it has something like "= True", that is the default, can be overriden
 
@@ -171,10 +169,10 @@ library(R.matlab)
 
 # dimensions
 ?dim
-?length
+?length # best for vectors
 nrow(LSAT) # how many people
 ncol(LSAT) # how many variables
-
+dim(LSAT) # both
 
 
 #### reference parts of an object with either $(more common) or @; depends whether S3 or S4: str() will tell you
@@ -193,7 +191,7 @@ detach(bfi) #remove
 # see what objects and data are in workspace
 ls()
 # clear it out
-rm(list=ls())
+# rm(list=ls())
 # or just get rid of 1 object: rm(bfi)
 
 # also, dont want to have to specify paths for writing and reading data?
@@ -211,8 +209,8 @@ head(out$residuals)
 ###### changing type of dataset
 ?matrix # has to be all of the same mode; e.g. all numeric
 # convert to matrix
-as.matrix()
-
+bfi.mat <- as.matrix(bfi)
+str(bfi.mat) # check to see if worked. Wont say matrix, but either "int" or "num"
 
 ?data.frame # can be different modes; easiest to just convert all read in data to data.frame
 data.df = data.frame(read.table(...))
@@ -232,8 +230,8 @@ str(bfi$O5fac)
 levels(bfi$O5fac)
 
 # change numeric to factor -- how you would artificially dichotomize an integer variable
-library(Hmisc); cut2()
-?cut
+# library(Hmisc); cut2()
+# ?cut
 
 # factor variable to numeric
 bfi$O5num = as.numeric(as.character(bfi$O5fac))
@@ -273,6 +271,7 @@ new.data = bfi[index] #got rid of factor variables
 #### rename only one variable in a dataset
 names(bfi)[5] = "newVar"
 colnames(bfi)[5] = "newVar2" # same thing
+# more than 1 variable, need to use c()
 
 
 ?c # combine
@@ -293,8 +292,9 @@ cor(bfi$A1,bfi$A2,use="pairwise.complete.obs")
 
 
 ###### code -99's as NA  #######
+data.df <- data.frame(bfi)
 data.df[data.df==-99] <-NA
-
+# important to do when importing data from other programs
 # !!!!!
 ##### !!!!!!!! Different procedure for recoding NA's #####
 # the previous procedure doesn't work
@@ -311,6 +311,12 @@ comp = sum(!complete.cases(bfi)) # Count of incomplete cases
 comp/nrow(bfi) # number of people/cases with atleast 1 missing value
 
 which(!complete.cases(bfi)) # Which cases (row numbers) are incomplete?
+
+
+# sometimes when analyzing data with missingness, instead of imputation
+# it is necessary to just eliminate cases with more missing values than a cutoff
+
+
 ####### identify # misssing, select cases with less or equal to 6
 M <- rowSums(is.na(bfi) ) # identify number of missing values per row
 good.rows <- which( M <= 6 )
