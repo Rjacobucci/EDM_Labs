@@ -1,7 +1,5 @@
 ---
-title: "Beyond Regression"
-author: "Ross Jacobucci"
-date: "March 27, 2015"
+title: "Group Search pt.1"
 output: pdf_document
 ---
 

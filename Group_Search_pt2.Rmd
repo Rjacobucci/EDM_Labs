@@ -1,16 +1,18 @@
 ---
-title: "Group Search pt. 2"
+title: "Group Search pt.2"
 output: pdf_document
 ---
-
+This is a continuation of various methods that have been proposed in the last 10 years for searching for subgroups, either observed or unobserved, in the dataset. Most of these are in relation to measurement invariance of differential item functioning.
 
 # Strucchange
-Easier to understand article:\
-http://journal.frontiersin.org/article/10.3389/fpsyg.2014.00438/abstract\
-\
-More papers at Edgar Merkle's site: \
+Easier to understand article:
+
+http://journal.frontiersin.org/article/10.3389/fpsyg.2014.00438/abstract
+
+More papers at Edgar Merkle's site: 
+
 http://semtools.r-forge.r-project.org/
-\
+
 estimation method depends on what type of covariate you have. 
 
 Need two new packages
@@ -39,12 +41,12 @@ comp <- complete.cases(HS)
 HS.comp <- HS[comp,]
 ```
 
-Test for continuous covariates:\
+Test for continuous covariates:
 1. "DM"
 2. "CvM"
 3. "maxLM"
 
-Test for ordinal covariates: (note, takes much much longer -- similar to semtree with ordinal)\
+Test for ordinal covariates: (note, takes much much longer -- similar to semtree with ordinal)
 1. "maxLMo"
 2. "WDMo"
 
@@ -119,6 +121,7 @@ SEM Trees, but for binary variables (rasch model)\
 
 http://cran.r-project.org/web/packages/psychotree/vignettes/raschtree.pdf
 
+http://link.springer.com/article/10.1007%2Fs11336-013-9388-3#page-1
 
 You have to set up the dataset a certain way -- its a little wonky
 ```{r}
@@ -129,7 +132,7 @@ HS.xs <- HS[,7:15]
 for(i in 1:9){
 HS.xs[,i] = ifelse(HS.xs[,i] < mean(HS.xs[,i]), 0, 1)
 }
-summary(HS.xs)
+#summary(HS.xs)
 
 mydata = data.frame(HS[,1:5])
 mydata$scale <- as.matrix(HS.xs)
@@ -140,7 +143,7 @@ Run it
 ```{r}
 RT_out <- raschtree(scale ~ sex + ageyr + school, data = mydata)
 RT_out
-summary(RT_out)
+# summary(RT_out)
 ```
 
 Plot it
@@ -162,11 +165,11 @@ coef(RT_out, node = 2)
 
 
 
+# Tutz DIFlasso
 
+http://link.springer.com/article/10.1007%2Fs11336-013-9377-6
 
-# DIFlasso
-- this section causes problem
-```{r}
+```{r,message=FALSE}
 library(DIFlasso)
 
 Y <- data.frame(mydata$scale)
@@ -181,7 +184,7 @@ plot(mlas1)
 ```
 
 
-Can re-fit (Problem?)
+Can re-fit (Code causes Tex problem)
 ```{r,eval=FALSE}
 mlas2 <- refitDIFlasso(mlas1)
 mlas2
@@ -189,7 +192,10 @@ plot(mlas2)
 ```
 
 
-Magis procedure: first load lassoDIF.R script and run functions
+# Magis DIF Lasso
+
+first load lassoDIF.R script and run functions
+
 http://jeb.sagepub.com/content/early/2014/12/16/1076998614559747.abstract
 
 
@@ -227,12 +233,15 @@ for(i in 1:301){
 names(hs.long)[3] <- "Y"
 ```
 
-Dataset is set up, now have to change variable names in lassoDIF.R\
-\
- -- right now, only can use one covariate at a time\
- \
-Change lines 7 and 63 to reflect covariate names\
-```{r,echo=FALSE}
+Dataset is set up, now have to change variable names in lassoDIF.R
+
+ -- right now, only can use one covariate at a time
+ 
+Change lines 7 and 63 in lassoDIF.R to reflect covariate names
+
+## Important: Have to source() the lassoDIF.R code
+
+```{r}
 source("/Users/RJacobucci/Documents/Github/ATI_Labs/lassoDIF.R") # change path
 out = lassoDIF(hs.long)
 #lassoDIF.coef(out)
@@ -241,7 +250,9 @@ lassoDIF.CV(out,hs.long)
 ```
 
 
-Mixture models with rasch models \
+# Mixture Rasch Models
+
+
 http://www2.uaem.mx/r-mirror/web/packages/psychomix/vignettes/raschmix.pdf
 \
 http://epm.sagepub.com/content/early/2014/06/20/0013164414536183
@@ -270,7 +281,9 @@ tetrachoric(data.frame(as.numeric(hs.mat3$school),m2@cluster)) # highest
 
 Do we get similar results using the original dataset (back to CFA model)?
 
-Factor Mixture Models in OpenMx -- only package to do it in R (I think?)
+# Factor Mixture Models in OpenMx
+
+-- only package to do it in R (I think?)
 
 ```{r}
 
@@ -337,7 +350,7 @@ data <- mxData(observed=HS,type="raw")
 fmm <- mxModel("Factor Mixture Model",
                 data, class1, class2, classP, classS, algFit, fit)
 fmmFit <- mxRun(fmm, suppressWarnings=TRUE)
-summary(fmmFit)
+# summary(fmmFit)
 fmmFit$classProbs
 
 #str(fmmFit)
@@ -390,12 +403,13 @@ cor(prbs[1:300],HS$grade[1:300])
 # compare 2 derived classes from both mixture models
 cor(m2@cluster,prbs[hs.mat2$sum != 0 & hs.mat2$sum != 9])
 ```
+The answer is no.
 
 
+Moderation Try with OpenMx
+-  how you specify the use of a covariate in OpenMx
 
-Moderation Try
-
-```{r}
+```{r,eval=FALSE}
 
 resVars <-  mxPath(from=c("x1","x2","x3","x4","x5","x6","x7","x8","x9"),
                         arrows=2,
