@@ -1,8 +1,5 @@
-######### Intro to learning R for the Psychometrics Class ########
-## Ross Jacobucci --  Fall 2014
+######### Intro to learning R for the Advanced Training Institute ########
 
-# for other great talks on an introduction to R, check out archived lectures:
-# https://dornsife.usc.edu/psyc/GC3-lectures
 
 ### I strongly recommend the use of Rstudio as a GUI to R
 ###### makes R much easier to use and learn
@@ -19,11 +16,12 @@ install.packages("mirt")
 
 
 # how to load packages that are already installed --won't work if not installed
-library(psych) # generally preferable to
+library(psych) # also can do
 require(mirt)
 
 
 ##### more direct, is to download straight from Github when available #####
+### This sometimes happens for developmenal packages, not quite ready for CRAN
 #if not installed already on your computer, install devtools
 install.packages('devtools')
 
@@ -60,17 +58,36 @@ plot # or just type function
 # list arguments within a function
 args(describe)  
 
+# when an argument does not have an "=" with it, it means it is mandatory to specify. 
+# When it has something like "= True", that is the default, can be overriden
+
 methods(class = "lm")  # notice the summary.lm --  this is what summary(lmobject) pulls from
 
 # Within packages or base R, this is how to get examples -- along with the code to produce them
 
+#### If you look at the help files, for instance:
+?lm
+# the Arguments section is what you can specify
+# the Value section is what shows up in the output
+
+# example
+### specify arguments
+lm.out <- lm(mpg ~ hp,data=mtcars,method="qr",model=T,singular.ok=T)
+
+## Now get values:
+# str(lm.out) !!!! lists all
+# to get specific ones, we can use $ on the assigned object
+lm.out$coefficients
+lm.out$effects
+# Notice how this corresponds perfectly to the help file
+
+# a lot of more popular, general packages come with add on help files
 demo(colors) # get demos of what you are looking for
 example(lm)
 example(mirt)
 
 
-# for the purposes of this class, will demonstrate techniques with both dichotomous(binary) 
-# and polytomous(likert) type responses
+
 
 # two options to get data -- read in your own or use data included in packages
 
@@ -102,6 +119,15 @@ plot(dsc)
 ?read.csv ### same as read.table, but makes defaults simpler such as sep = ","
 ?read.delim # .tsv
 
+# want to conver dataset to Mplus format?
+write.table(LSAT,file="location/you/want/file/saved.dat",sep=" ",# best to save as .dat
+            row.names=F,col.names=F,na="-99") # note: missing can be anything but NA
+
+# I used to always go into SPSS and create dataset in right format for Mplus, 
+# but this is easier
+
+
+
 ###### simulated dataset from Edwards 2009
 # http://faculty.psy.ohio-state.edu/edwards/
 
@@ -109,7 +135,7 @@ plot(dsc)
 
 data = read.table(file.choose(),sep="",header=T,na.strings="NA") # pop up finder to click on specified dataset
 #### important to know what the type of dataset is:
-# .dat sep=""   -- just separated by space
+# .dat sep=" "   -- just separated by space
 # .csv sep=","  -- separated by comma
 summary(data)
 head(data)
@@ -124,6 +150,14 @@ data2 = read.table("/Users/RJacobucci/Documents/NCSsim/NCSsim.dat",sep="")
 # SPSS and Minitab, S, SAS, Stata, Systat, Weka, dBase
 library(foreign) 
 ?read.spss
+# !!! note: with read.spss, always get warning -- not a problem though
+spss.dat <- read.spss("/Users/RJacobucci/Documents/NCSsim/NCSsim.sav",
+                       use.value.labels=T, # pulls variable names
+                       to.data.frame=T) #converts to useful format
+
+# also -- in Rstudio, can use the "Import Dataset" button in top right corner
+### I've never actually used it, since I find easier to use script
+                      
 
 # SAS
 library(sas7bdat)
@@ -132,36 +166,46 @@ library(sas7bdat)
 # Matlab
 library(R.matlab)
 ?readMat
-
-
 ##### more options: http://www.ats.ucla.edu/stat/r/faq/inputdata_R.htm
   
-
-
-# by column
-
 
 # dimensions
 ?dim
 ?length
-nrow()
-ncol()
+nrow(LSAT) # how many people
+ncol(LSAT) # how many variables
 
 
 
-########### find out more information about an object ########
-##### especially useful when trying to find data type of each item
-?str  
-out = lm(O5 ~ education, data=bfi)
-str(out)
-out$coefficients
-out$model$education
 #### reference parts of an object with either $(more common) or @; depends whether S3 or S4: str() will tell you
+# reference only the O5 variable -- using $ with dataset takes column
 head(bfi$O5)
+head(bfi[,"O5"]) # same thing
 
-out = lm(O5 ~ education, data=bfi)
+# also, if you use only one dataset over and over again in script
+attach(bfi)
+# now, don't have to reference data
+head(O5)
+
+# but this can mess things up if multiple datasets are loaded
+detach(bfi) #remove
+
+# see what objects and data are in workspace
+ls()
+# clear it out
+rm(list=ls())
+# or just get rid of 1 object: rm(bfi)
+
+# also, dont want to have to specify paths for writing and reading data?
+# set the workspace
+
+
+
+
+
+out = glm(O5 ~ education, data=bfi)
 head(out$residuals)
-
+# in my experience, $ is more common than @
 
 
 ###### changing type of dataset
@@ -181,7 +225,7 @@ mode(bfi)
 str(bfi) # all integers: depending on application, may be important to change to factor
 is.factor(bfi$O5)
 
-
+# change variable type -- very important for some models
 bfi$O5fac = as.factor(bfi$O5)
 str(bfi$O5fac)
 ?levels
@@ -205,36 +249,36 @@ str(bfi$O5int)
 ?sample
 ?subset
 
-
-str(O5)
-attach(bfi) # so you don't have to always reference the dataset e.g. varname instead of data$varname
-str(O5)
-
-
 data[row,col]
-#### if using non-continuous indices of variables, must use c() combine
-head(bfi[,1:3,5:7]) # fail
-head(bfi[,c(1:3,5:7)]) # succeed
+# I want first 100 people and columns 4 to 8
+dim(bfi[1:100,4:8])
+
+
 
 # another way to pull only certain variables, using indices assigned to an object
+#####
+myvars = c("O1","O2","O3","O4","O5") # assign to object
+openness = bfi[myvars]  # same as bfi[,21:25]
+colnames(openness)
 
-index = sapply(bfi,is.numeric)  # usually just try all apply functions to see which one works
+# more advanced, subset just numeric variables
+index = sapply(bfi,is.numeric)  # create a column index, TRUE = Numeric
 new.data = bfi[index] #got rid of factor variables
 
 
 ### good tutorial on apply functions ###
 # http://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/
 
-#####
-myvars = c("O1","O2","O3","O4","O5")
-openness = bfi[myvars]  # same as bfi[,21:25]
-colnames(bfi)
 
 #### rename only one variable in a dataset
 names(bfi)[5] = "newVar"
+colnames(bfi)[5] = "newVar2" # same thing
+
 
 ?c # combine
-?cat # concatenate
+?cat # concatenate, helpful when combining strings with paste()
+?paste
+
 
 ############## missing data #################
 ## !!!!!!!!!!! maybe the most important topic !!!!!!!!!!!!!!!!! ########
@@ -270,28 +314,42 @@ which(!complete.cases(bfi)) # Which cases (row numbers) are incomplete?
 ####### identify # misssing, select cases with less or equal to 6
 M <- rowSums(is.na(bfi) ) # identify number of missing values per row
 good.rows <- which( M <= 6 )
-bfi.sub   <- bfi[ good.rows, ]
+bfi.sub   <- bfi[ good.rows, ] # create dataset with people < 6 missing
 
 dim(bfi)
-dim(bfi.sub)
+dim(bfi.sub) # lose 6 people
 
 ########### have missing cases imputed with median (3)########################
+data.sub <- bfi.sub
 data.sub[is.na(data.sub)] <- 3
 str(data.sub)
 
 # number of missing per item
 colSums(is.na(bfi) ) 
-
+colSums(is.na(data.sub)) # got rid of all missing
 
 # imputation
 ######### check each package's manual to see if there are built in options for imputation
 imputeMissing(x, Theta) # mirt package
-?imputeMissing
+
+# also, check out imputeR package
+
+
 ###### PreProcessing for imputation ######
 # can use the center, scale, or BoxCox if dealing with scales for factor analysis--not for items
 library(caret)
-?preProcess  # method = meadianImpute, bagImpute,knnImpute
+?preProcess  # method = medianImpute, bagImpute,knnImpute
 
+agree <- bfi[,1:5]
+# mean of 0 and sd = 1
+agree.scale <- scale(agree)
+psych::describe(agree.scale)
+# note: "::" has to be used when two packages that are loaded have the same function
+# common one is sem() from both lavaan::sem and sem::sem
+
+pred <- preProcess(agree,method=c("center","scale")) 
+agree.scale2 <- predict(pred,agre)
+psych::describe(agree.scale2)
 
 #### tons of packages: imputeR (I like), mice, mi, imputation, impute, amelia
 
@@ -299,5 +357,5 @@ library(caret)
 
 ######################################################################################
 ################## An important topic not covered is plotting ########################
-############## check out a talk I gave last Spring in the GC3 ########################
+############## not to plug myself, but check out a talk I gave at USC ################
 ###########  http://dornsife.usc.edu/psyc/20140326gc3 ################################

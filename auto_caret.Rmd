@@ -7,12 +7,12 @@ output: pdf_document
 Just a simple example of how to run multiple types of models at once on the same dataset. This can be helpful if there is no one method that is thought to be best, thus making the testing of multiple types of algorithms necessary.
 
 
-```{r}
+```{r,message=FALSE}
 library(caret)
 library(mlbench)
 library(ggplot2)
 data(Sonar)
-str(Sonar)
+#str(Sonar)
 
 inTraining <- createDataPartition(Sonar$Class, p = 0.75, list = FALSE)
 training <- Sonar[inTraining, ]
@@ -22,7 +22,7 @@ testing <- Sonar[-inTraining, ]
 
 http://topepo.github.io/caret/training.html#pred
 
-```{r}
+```{r,results='hide',message=FALSE}
 #specify method list
 methods <- list()
 methods <- c("glmnet","rpart","ctree","knn","nnet")
@@ -54,9 +54,12 @@ auto.caret <- function(methods,trainData,testData,tune.n){
 
 # run
 out <- auto.caret(methods=methods,trainData=training,testData=testing,tune.n=5)
+```
 
+Check out results
+```{r}
 
-plot(out$trainRes[[4]],main=methods[4])
+#plot(out$trainRes[[4]],main=methods[4])
 qplot(x=methods,y=out$testAcc)
 bwplot(out$resamp, layout = c(3, 1))
 dotplot(out$resamp, metric = "Accuracy")
