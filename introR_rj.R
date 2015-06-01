@@ -34,7 +34,7 @@ library(faoutlier)
 
 ####################### Ways to get general help ###########################
 
-help.search("histograms") # google type search through R documentation. 
+help.search("histograms") # google type search through R documentation.
 ??histogram # same thing as help.search().
 help.start()   # general help.
 
@@ -49,14 +49,14 @@ help(plot)
 plot # or just type function
 
 
-#The great thing about the plot function, is that it changes depending upon what object is called. 
+#The great thing about the plot function, is that it changes depending upon what object is called.
 # Example of a "Generic function"
 # other generic functions: summary,anova, predict
 
 # list arguments within a function
-args(describe)  
+args(describe)
 formals(describe)
-# when an argument does not have an "=" with it, it means it is mandatory to specify. 
+# when an argument does not have an "=" with it, it means it is mandatory to specify.
 # When it has something like "= True", that is the default, can be overriden
 
 methods(class = "lm")  # notice the summary.lm --  this is what summary(lmobject) pulls from
@@ -121,7 +121,7 @@ plot(dsc)
 write.table(LSAT,file="location/you/want/file/saved.dat",sep=" ",# best to save as .dat
             row.names=F,col.names=F,na="-99") # note: missing can be anything but NA
 
-# I used to always go into SPSS and create dataset in right format for Mplus, 
+# I used to always go into SPSS and create dataset in right format for Mplus,
 # but this is easier
 
 
@@ -131,7 +131,7 @@ write.table(LSAT,file="location/you/want/file/saved.dat",sep=" ",# best to save 
 
 # already downloaded on my computer
 
-data = read.table(file.choose(),sep="",header=T,na.strings="NA") # pop up finder to click on specified dataset
+data = read.table(file.choose(),sep="",header=F,na.strings="NA") # pop up finder to click on specified dataset
 #### important to know what the type of dataset is:
 # .dat sep=" "   -- just separated by space
 # .csv sep=","  -- separated by comma
@@ -146,7 +146,7 @@ data2 = read.table("/Users/RJacobucci/Documents/NCSsim/NCSsim.dat",sep="")
 
 #################### datasets from SPSS, SAS, or other software ########
 # SPSS and Minitab, S, SAS, Stata, Systat, Weka, dBase
-library(foreign) 
+library(foreign)
 ?read.spss
 # !!! note: with read.spss, always get warning -- not a problem though
 spss.dat <- read.spss("/Users/RJacobucci/Documents/NCSsim/NCSsim.sav",
@@ -155,7 +155,7 @@ spss.dat <- read.spss("/Users/RJacobucci/Documents/NCSsim/NCSsim.sav",
 
 # also -- in Rstudio, can use the "Import Dataset" button in top right corner
 ### I've never actually used it, since I find easier to use script
-                      
+
 
 # SAS
 library(sas7bdat)
@@ -165,15 +165,15 @@ library(sas7bdat)
 library(R.matlab)
 ?readMat
 ##### more options: http://www.ats.ucla.edu/stat/r/faq/inputdata_R.htm
-  
+
 
 # dimensions
 ?dim
 ?length # best for vectors
-nrow(LSAT) # how many people
-ncol(LSAT) # how many variables
+nrow(LSAT) # how many people; same as dim(LSAT)[1]
+ncol(LSAT) # how many variables; same as dim(LSAT[2])
 dim(LSAT) # both
-
+str(LSAT)
 
 #### reference parts of an object with either $(more common) or @; depends whether S3 or S4: str() will tell you
 # reference only the O5 variable -- using $ with dataset takes column
@@ -201,8 +201,8 @@ ls()
 
 
 
-out = glm(O5 ~ education, data=bfi)
-head(out$residuals)
+#out = glm(O5 ~ education, data=bfi)
+#head(out$residuals)
 # in my experience, $ is more common than @
 
 
@@ -215,8 +215,10 @@ str(bfi.mat) # check to see if worked. Wont say matrix, but either "int" or "num
 ?data.frame # can be different modes; easiest to just convert all read in data to data.frame
 data.df = data.frame(read.table(...))
 
+
 ?mode # mode of object, not variable type
 mode(bfi)
+mode(lm.out)
 
 #### changing variable type
 ################## for items: almost always dealing with factor variables
@@ -226,7 +228,8 @@ is.factor(bfi$O5)
 # change variable type -- very important for some models
 bfi$O5fac = as.factor(bfi$O5)
 str(bfi$O5fac)
-?levels
+class(bfi$O5fac)
+#?levels
 levels(bfi$O5fac)
 
 # change numeric to factor -- how you would artificially dichotomize an integer variable
@@ -256,13 +259,15 @@ dim(bfi[1:100,4:8])
 # another way to pull only certain variables, using indices assigned to an object
 #####
 myvars = c("O1","O2","O3","O4","O5") # assign to object
-openness = bfi[myvars]  # same as bfi[,21:25]
+openness = bfi[myvars]
+# same as
+head(bfi[,21:25]) # more tedious with large number of columns
 colnames(openness)
 
 # more advanced, subset just numeric variables
 index = sapply(bfi,is.numeric)  # create a column index, TRUE = Numeric
 new.data = bfi[index] #got rid of factor variables
-
+#dim(new.data)
 
 ### good tutorial on apply functions ###
 # http://nsaunders.wordpress.com/2010/08/20/a-brief-introduction-to-apply-in-r/
@@ -271,7 +276,7 @@ new.data = bfi[index] #got rid of factor variables
 #### rename only one variable in a dataset
 names(bfi)[5] = "newVar"
 colnames(bfi)[5] = "newVar2" # same thing
-# more than 1 variable, need to use c()
+# more than 1 variable, need to use c() like before
 
 
 ?c # combine
@@ -285,7 +290,7 @@ colnames(bfi)[5] = "newVar2" # same thing
 library(psych)
 
 head(bfi)
-cor(bfi$A1,bfi$A2)  # fails because of missing or NA values 
+cor(bfi$A1,bfi$A2)  # fails because of missing or NA values
 args(cor)  # -- default in cor is complete cases
 cor(bfi$A1,bfi$A2,use="pairwise.complete.obs")
 
@@ -297,13 +302,17 @@ data.df[data.df==-99] <-NA
 # important to do when importing data from other programs
 # !!!!!
 ##### !!!!!!!! Different procedure for recoding NA's #####
-# the previous procedure doesn't work
+
 bfi$education[bfi$education==NA] = -100
 str(bfi)
-
+# the previous procedure doesn't work
 bfi$education[is.na(bfi$education)] = -99
 
 str(bfi)
+
+# this isn't that useful for R, as best to have missing = NA
+# but when exporting data, best not to leave missing as NA
+
 
 ###### analyze missing data ###########
 sum(is.na(bfi)) # Do this to count the NA in whole dataset
@@ -330,9 +339,15 @@ data.sub <- bfi.sub
 data.sub[is.na(data.sub)] <- 3
 str(data.sub)
 
+# if want just complete cases
+comps <- complete.cases(bfi.sub) # logical, True = Complete
+data.comp <- bfi.sub[comps,]
+
+
 # number of missing per item
-colSums(is.na(bfi) ) 
+colSums(is.na(bfi) )
 colSums(is.na(data.sub)) # got rid of all missing
+colSums(is.na(data.comp))
 
 # imputation
 ######### check each package's manual to see if there are built in options for imputation
@@ -353,8 +368,8 @@ psych::describe(agree.scale)
 # note: "::" has to be used when two packages that are loaded have the same function
 # common one is sem() from both lavaan::sem and sem::sem
 
-pred <- preProcess(agree,method=c("center","scale")) 
-agree.scale2 <- predict(pred,agre)
+pred <- preProcess(agree,method=c("center","scale"))
+agree.scale2 <- predict(pred,agree)
 psych::describe(agree.scale2)
 
 #### tons of packages: imputeR (I like), mice, mi, imputation, impute, amelia
