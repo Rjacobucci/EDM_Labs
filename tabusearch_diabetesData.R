@@ -187,18 +187,6 @@ summary(lm.tabu2)
 pred.tabu2 = predict(lm.tabu2,diab.test)
 cor(pred.tabu2,diab.test$Y)**2
 
-
-
-# and again compare to original regression
-
-lm.full <- lm(Y ~ .,diab.train)
-summary(lm.full)
-
-pred.full = predict(lm.full,diab.test)
-cor(pred.full,diab.test$Y)**2
-
-
-
 # compare to lasso
 
 YY.train <- as.matrix(diab.train$Y)
@@ -213,3 +201,13 @@ coef(lasso.out99)
 lm.lasso <- lm(Y ~ sex + bmi + map + hdl + ltg,diab.train)
 pred.lasso2 = predict(lm.lasso,diab.test)
 cor(pred.lasso2,diab.test$Y)**2
+
+
+# and again compare to original regression
+
+lm.full <- lm(Y ~ .,diab.train)
+summary(lm.full)
+
+pred.full = predict(lm.full,diab.test)
+cor(pred.full,diab.test$Y)**2
+
