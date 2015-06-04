@@ -17,7 +17,7 @@ Two packages will be used and their caret equivalents:\
 \
 **party**: http://cran.r-project.org/web/packages/party/vignettes/party.pdf\
 \
-In caret, method = \
+In **caret**, method = \
 "rpart" -- tuning = cp (complexity parameter)\
 "rpart2" -- tuning = maxdepth\
 "rpartCost" -- tuning = cp and cost\
