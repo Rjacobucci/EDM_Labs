@@ -213,10 +213,3 @@ summary(lm.full)
 
 pred.full = predict(lm.full,diab.test)
 cor(pred.full,diab.test$Y)**2
-
-
-library(caret)
-
-train.out <- train(Y ~ ., diab.train,method="neuralnet")
-train.out
-predict(train.out,diab.test)
