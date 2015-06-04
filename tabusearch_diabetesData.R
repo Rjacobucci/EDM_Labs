@@ -211,3 +211,14 @@ summary(lm.full)
 pred.full = predict(lm.full,diab.test)
 cor(pred.full,diab.test$Y)**2
 
+
+library(caret)
+
+train.out <- train(XX.train,YY.train,method="neuralnet")
+train.out
+predict(train.out)
+
+
+train.out2 <- train(XX.train,YY.train,method="gbm")
+train.out2
+predict(train.out2)
