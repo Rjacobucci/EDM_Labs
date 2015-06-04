@@ -172,3 +172,17 @@ neighbour <- function(K, vars, tabulist, iter, tabusize) {
 
 tabusearch(c("bmi","map","hdl","ltg"), names(diab.train)[2:11], diab.train$Y, diab.train, 10)
 
+lm.tabu <- lm(Y ~ bmi + map + hdl + ltg,diab.train)
+summary(lm.tabu)
+
+pred.tabu = predict(lm.tabu,diab.test)
+cor(pred.tabu,diab.test$Y)**2
+
+
+# from other TabuSearch program in R
+
+lm.tabu2 <- lm(Y ~ sex + bmi + map + tc + ldl + ltg + glu,diab.train)
+summary(lm.tabu2)
+
+pred.tabu2 = predict(lm.tabu2,diab.test)
+cor(pred.tabu2,diab.test$Y)**2
