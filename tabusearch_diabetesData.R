@@ -186,3 +186,30 @@ summary(lm.tabu2)
 
 pred.tabu2 = predict(lm.tabu2,diab.test)
 cor(pred.tabu2,diab.test$Y)**2
+
+
+
+# and again compare to original regression
+
+lm.full <- lm(Y ~ .,diab.train)
+summary(lm.full)
+
+pred.full = predict(lm.full,diab.test)
+cor(pred.full,diab.test$Y)**2
+
+
+
+# compare to lasso
+
+YY.train <- as.matrix(diab.train$Y)
+XX.train <- as.matrix(diab.train[,2:11])
+
+lasso.out9 <- cv.glmnet(XX.train,YY.train,family="gaussian",alpha=1)
+(lmin <- lasso.out9$lambda.1se)
+
+lasso.out99 <- glmnet(XX.train,YY.train,family="gaussian",alpha=1,lambda=lminSE)
+coef(lasso.out99)
+
+pred.lasso <- lm(Y ~ sex + bmi + map + hdl + ltg,diab.train)
+pred.lasso2 = predict(pred.lasso,diab.test)
+cor(pred.lasso2,diab.test$Y)**2
