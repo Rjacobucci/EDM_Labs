@@ -248,6 +248,11 @@ summary(lr.out)
 ```
 
 I always find it much harder to figure out how well I am doing with logistic regression. One of the best ways to assess results in my opinion is the use of receiver operating characteristic curves (ROC curves).\
+
+
+\
+good intro to using ROC:\
+https://ccrma.stanford.edu/workshops/mir2009/references/ROCintro.pdf
 \
 These plots are a balanace of sensitivity and specificity. Ideally the curve gets as close as possible to the upper left corner.\
 \
