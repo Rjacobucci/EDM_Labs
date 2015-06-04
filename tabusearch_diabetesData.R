@@ -192,6 +192,9 @@ cor(pred.tabu2,diab.test$Y)**2
 YY.train <- as.matrix(diab.train$Y)
 XX.train <- as.matrix(diab.train[,2:11])
 
+YY.test <- as.matrix(diab.test$Y)
+XX.test <- as.matrix(diab.test[,2:11])
+
 lasso.out9 <- cv.glmnet(XX.train,YY.train,family="gaussian",alpha=1)
 (lmin <- lasso.out9$lambda.1se)
 
@@ -214,11 +217,6 @@ cor(pred.full,diab.test$Y)**2
 
 library(caret)
 
-train.out <- train(XX.train,YY.train,method="neuralnet")
+train.out <- train(Y ~ ., diab.train,method="neuralnet")
 train.out
-predict(train.out)
-
-
-train.out2 <- train(XX.train,YY.train,method="gbm")
-train.out2
-predict(train.out2)
+predict(train.out,diab.test)
