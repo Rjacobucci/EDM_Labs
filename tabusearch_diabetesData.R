@@ -172,7 +172,7 @@ neighbour <- function(K, vars, tabulist, iter, tabusize) {
 
 tabusearch(c("bmi","map","hdl","ltg"), names(diab.train)[2:11], diab.train$Y, diab.train, 10)
 
-lm.tabu <- lm(Y ~ bmi + map + hdl + ltg,diab.train)
+lm.tabu <- lm(Y ~ bmi + map + hdl + ltg + age,diab.train)
 summary(lm.tabu)
 
 pred.tabu = predict(lm.tabu,diab.test)
@@ -210,6 +210,6 @@ lasso.out9 <- cv.glmnet(XX.train,YY.train,family="gaussian",alpha=1)
 lasso.out99 <- glmnet(XX.train,YY.train,family="gaussian",alpha=1,lambda=lminSE)
 coef(lasso.out99)
 
-pred.lasso <- lm(Y ~ sex + bmi + map + hdl + ltg,diab.train)
-pred.lasso2 = predict(pred.lasso,diab.test)
+lm.lasso <- lm(Y ~ sex + bmi + map + hdl + ltg,diab.train)
+pred.lasso2 = predict(lm.lasso,diab.test)
 cor(pred.lasso2,diab.test$Y)**2
