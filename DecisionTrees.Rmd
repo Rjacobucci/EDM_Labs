@@ -264,7 +264,7 @@ glm.probs=predict(lr.out,type="response")
 
 rocCurve <- roc(Default$default,glm.probs)
 pROC::auc(rocCurve)
-pROC::ci.roc(rocCurve)
+pROC::ci(rocCurve)
 
 # quartz()
 plot(rocCurve, legacy.axes = TRUE,print.thres=T,print.auc=T)
@@ -291,7 +291,7 @@ Results from lasso using CV
 
 rocCurve.lasso <- roc(Default$default,lasso.probs)
 pROC::auc(rocCurve.lasso)
-pROC::ci.roc(rocCurve.lasso)
+pROC::ci(rocCurve.lasso)
 
 # quartz()
 plot(rocCurve.lasso, legacy.axes = TRUE,print.thres=T,print.auc=T)
