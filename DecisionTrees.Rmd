@@ -301,6 +301,8 @@ pROC::ci(rocCurve.lasso)
 plot(rocCurve.lasso, legacy.axes = TRUE,print.thres=T,print.auc=T)
 ```
 
+
+
 Almost identical results to logistic regression with no penalization.
 
 ## Using Decision Trees for Classification
@@ -323,6 +325,44 @@ In train() and through trainControl() you can see that it automatically varies d
 
 In examining both plots, it seems as both methods do comparably well, while also they both have different tuning parameters (X-axis). Based on these plots, I would increase the number of values for the tuning parameters, as the accuracy did not reach a maximum necessarily outside of the tails. (tuneLength = 3 is default)
 
+
+### using a confusion matrix
+
+```{r}
+
+train.class <- predict(train.rpart,Default,type="raw")
+confusionMatrix(train.class,Default$default)
+# much better than just using
+table(train.class,Default$default)
+```
+
+## Changing the cutoff for class assignment
+
+This uses the optimal cutoff from the pROC plot
+- using default predict() just uses 0.5 for class cutoff
+```{r}
+train.prob <- predict(train.rpart,Default,type="prob")[,2]
+train.class2 <- ifelse(train.prob > .031,1,0)
+confusionMatrix(as.numeric(Default$default)-1,train.class2,positive="1")
+# much better than just using
+table(train.class2,Default$default)
+```
+
+If there is a large class imbalance, may want to try unbalance sampling:
+http://www.win-vector.com/blog/2015/02/does-balancing-classes-improve-classifier-performance/
+
+
+Another way to get optimal threshold:
+```{r,eval=FALSE}
+library(ROCR)
+pred <- prediction(train.prob,as.numeric(Default$default)-1)
+perf <- performance(pred,"tpr","fpr")
+str(perf)
+plot(perf)
+cutoffs <- data.frame(cut=perf@alpha.values[[1]], fpr=perf@x.values[[1]], 
+                      tpr=perf@y.values[[1]])
+cutoffs
+```
 
 # Boosting and Random Forests
 
