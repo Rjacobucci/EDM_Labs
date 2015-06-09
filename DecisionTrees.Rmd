@@ -203,6 +203,7 @@ With plotcp() we are going to choose the error within 1 SE of the lowest cross-v
 ```{r}
 plotcp(rpart.train)
 printcp(rpart.train)
+rsq.rpart(rpart.train)
 prune.Bos <- prune(rpart.train,0.053)
 
 #plot(prune.Bos);text(prune.Bos)
