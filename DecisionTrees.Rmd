@@ -339,7 +339,7 @@ table(train.class,Default$default)
 ## Changing the cutoff for class assignment
 
 This uses the optimal cutoff from the pROC plot
-- using default predict() just uses 0.5 for class cutoff
+
 ```{r}
 train.prob <- predict(train.rpart,Default,type="prob")[,2]
 train.class2 <- ifelse(train.prob > .031,1,0)
