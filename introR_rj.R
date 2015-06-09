@@ -71,12 +71,13 @@ methods(class = "lm")  # notice the summary.lm --  this is what summary(lmobject
 # example
 ### specify arguments
 lm.out <- lm(mpg ~ hp,data=mtcars,method="qr",model=T,singular.ok=T)
-
+str(lm.out)
 ## Now get values:
 # str(lm.out) !!!! lists all
 # to get specific ones, we can use $ on the assigned object
 lm.out$coefficients
 lm.out$effects
+summary(lm.out)
 # Notice how this corresponds perfectly to the help file
 
 # a lot of more popular, general packages come with add on help files
@@ -170,9 +171,9 @@ library(R.matlab)
 # dimensions
 ?dim
 ?length # best for vectors
-nrow(LSAT) # how many people; same as dim(LSAT)[1]
+nrow(data) # how many people; same as dim(LSAT)[1]
 ncol(LSAT) # how many variables; same as dim(LSAT[2])
-dim(LSAT) # both
+dim(data) # both
 str(LSAT)
 
 #### reference parts of an object with either $(more common) or @; depends whether S3 or S4: str() will tell you
@@ -302,7 +303,7 @@ data.df[data.df==-99] <-NA
 # important to do when importing data from other programs
 # !!!!!
 ##### !!!!!!!! Different procedure for recoding NA's #####
-
+?subset
 bfi$education[bfi$education==NA] = -100
 str(bfi)
 # the previous procedure doesn't work

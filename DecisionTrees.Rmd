@@ -34,6 +34,9 @@ Lets load the main packages
 library(caret)
 library(rpart)
 library(pROC)
+library(randomForest)
+library(ada)
+library(ISLR)
 library(party)
 library(MASS) # for boston data
 data(Boston)
@@ -200,24 +203,24 @@ With plotcp() we are going to choose the error within 1 SE of the lowest cross-v
 ```{r}
 plotcp(rpart.train)
 printcp(rpart.train)
-prune.Bos <- prune(rpart.train,0.017)
+prune.Bos <- prune(rpart.train,0.053)
 
 #plot(prune.Bos);text(prune.Bos)
 fancyRpartPlot(prune.Bos)
+
+pred.prune <- predict(prune.Bos,Boston.test)
+cor(pred.prune,Boston.test$medv)
 ```
 
 caret:
 ```{r}
 ctree.train <- ctree(medv ~., data=Boston.train)
-
+#plot(ctree.train) # huge tree
 pred.ctreeTest <- predict(ctree.train,Boston.test)
 cor(pred.ctreeTest,Boston.test$medv)**2
 
 ```
-Drops from 0.87 to 0.77\
-\
-Better than rpart (barely) and lm()\
-\
+
 It is worth noting how much more of an effect there was for using a test dataset with the tree methods as compared to lm(), this is pretty typical, and much more important with more "flexible" methods such as random forests, gbm, svm etc...
 
 
@@ -319,16 +322,159 @@ In train() and through trainControl() you can see that it automatically varies d
 
 In examining both plots, it seems as both methods do comparably well, while also they both have different tuning parameters (X-axis). Based on these plots, I would increase the number of values for the tuning parameters, as the accuracy did not reach a maximum necessarily outside of the tails. (tuneLength = 3 is default)
 
-Finally, what if we try a more advanced, flexible tree algorith, Random Forests?
 
-```{r}
-Default$r1 <- rnorm(10000)
-Default$r2 <- rnorm(10000)
-train.rf <- train(as.factor(default) ~.,data=Default,
-                  method="rf",tuneLength=4)
-plot(train.rf)
+# Boosting and Random Forests
 
-train.rf$finalModel$importance
+For this, we will use the **caret** package as an interface to both the **gbm** and **randomForest** packages.
+
+Because gbm and random forests take much longer to run, we could set up parallelization through caret and other packages.
+http://topepo.github.io/caret/parallel.html
+
+In my experience, unless your dataset is huge, parallelization with random forests tends to take longer than setting up only serial computation.
+
+
+In caret, randomForest has two implementations, method="rf" and method="parRF" with parRF being the parallel version. The only tuning parameter for both is mtry.
+
+Note, that using the train() will take longer, as it is using different tuning parameters and by default using bootstrap sampling to prevent overfitting. 
+
+To let train() pick the values of mtry, just set tuneLength to however many different values you want it to try. Default is 3.
+
+
+
+```{r,fig=T}
+# set up parallel
+#library(snowfall)
+#sfInit(parallel=T,cpus=4)
+
+cont <- trainControl(allowParallel=TRUE,method="cv")
+
+train.rf1 <- train(medv ~ ., data=Boston.train,method="rf",importance=T,
+                   tuneLength=3)
+
+train.rf1
+
+plot(train.rf1)
+
+#rf <- train.rf1$finalModel
+varImp(train.rf1)
+
+# see how we do on hold out sample
+pred.test1 <- predict(train.rf1,Boston.test)
+cor(pred.test1,Boston.test$medv)**2
 ```
 
-You can see the propensity for random forests to overfit by the inclusion and higher importance for two random noise variables added to the dataset
+
+cforest is implemented as method="cforest" with the only tuning parameter being mtry
+
+
+```{r}
+train.cf1 <- train(medv ~., data=Boston.train,method="cforest")
+train.cf1
+
+plot(train.cf1)
+
+varImp(train.cf1)
+
+# see how we do on hold out sample
+pred.test2 <- predict(train.cf1,Boston.test)
+cor(pred.test2,Boston.test$medv)**2
+
+```
+
+
+For classification, a couple other things to use paired with train()
+
+```{r}
+# set up data
+data(Carseats)
+#attach(Carseats)
+#hist(Carseats$Sales)
+High=ifelse(Carseats$Sales<=8,"No","Yes")
+Carseats=data.frame(Carseats, High)
+Carseats$Sales <- NULL
+Carseats$ShelveLoc <- as.numeric(Carseats$ShelveLoc)
+
+
+train2 = sample(dim(Carseats)[1], dim(Carseats)[1]/2) # half of sample
+Carseats.train = Carseats[train2, ]
+Carseats.test = Carseats[-train2, ]
+```
+
+
+
+Now run random forests
+```{r,eval=FALSE}
+
+train.rf2 <- train(as.factor(High) ~ ., data=Carseats.train,method="rf",trControl=cont)
+train.rf2
+
+rf.probs=predict(train.rf2,newdata=Carseats.test,type="prob")[,2]
+rocCurve22 <- roc(Carseats.train$High,rf.probs)
+auc(rocCurve22)
+plot(rocCurve22)
+
+
+rf.class=predict(train.rf2,newdata=Carseats.train)
+confusionMatrix(Carseats.train$High,rf.class)
+
+# how about on test dataset
+
+rf.classTest=predict(train.rf2,Carseats.test)
+confusionMatrix(Carseats.test$High,rf.classTest)
+
+
+# ROC
+rf.probs1=predict(train.rf2,Carseats.test,type="prob")[,2]
+rocCurve4 <- roc(Carseats.test$High,rf.probs1)
+auc(rocCurve4)
+ci(rocCurve4)
+plot(rocCurve4)
+
+```
+
+cforest for binary -- automatically knows it is binary, unlike randomForest
+
+!! bug with the predict.cforest function
+```{r,eval=FALSE}
+train.cf2 <- train(High ~ ., data=Carseats.train,method="cforest",trControl=cont)
+train.cf2
+
+cf.probs=predict(train.cf2) # doesn't work. ????
+rocCurve33 <- roc(Carseats$High,cf.probs)
+auc(rocCurve33)
+plot(rocCurve33)
+
+
+cf.class=predict(train.cf2$finalModel)
+confusionMatrix(Carseats$High,cf.class) # no errors
+
+
+# how about on test dataset
+
+cf.classTest=predict(train.cf2,newdata=Carseats.test)
+confusionMatrix(Carseats.test$High,cf.classTest)
+
+
+```
+
+### boosting
+packages: "gbm" and "ada" -- both can be accessed through caret
+
+Example tuning parameters for "gbm: http://topepo.github.io/caret/training.html
+
+For this, I am going to use method="ada" which is one of the forms of boosting. Currently, problem with method="gbm"
+
+Basic set up to compare results to RF:
+```{r,eval=FALSE}
+
+#modelLookup("ada")
+train.ada <- train(as.factor(High) ~ ., data=Carseats.train,method="ada",trControl=cont)
+train.ada
+
+ada.probs=predict(train.ada,newdata=Carseats.test,type="prob")[,2]
+rocCurve3 <- roc(Carseats.test$High,ada.probs)
+auc(rocCurve3)
+ci(rocCurve3)
+plot(rocCurve3,add=T,col=c(2)) # color red is ada
+
+```

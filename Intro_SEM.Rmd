@@ -11,19 +11,21 @@ prcomp() -- built-in
 To do EFA:
 factanal() -- builtin
 
-fa() -- from psych; multiple upgrades
+fa() -- from **psych**; multiple upgrades
 
-efaUnrotate() -- from semTools; can do FIML for missing data and WLSMV for categorical variables
+efaUnrotate() -- from **semTools**; can do FIML for missing data and WLSMV for categorical variables
 
-GPA() -- from GPArotation -- one stop shop for factor rotations
+GPA() -- from **GPArotation** -- one stop shop for factor rotations
+
+**nFactors** package contains various functions for determining number of factors
 
 CFA:
-cfa() -- from lavaan package
+cfa() -- from **lavaan** package
 
 General SEM:
-OpenMx -- can do cfa,sem, mixtures, differential equations...Most general package
+**OpenMx** -- can do cfa,sem, mixtures, differential equations...Most general package
 
-lavaan -- modeled after Mplus; can do maybe 80% of the things that Mplus can
+**lavaan** -- modeled after Mplus; can do maybe 80% of the things that Mplus can
 
 We will be using the Holzinger Swineford dataset for all of the examples. Data from lavaan package
 
