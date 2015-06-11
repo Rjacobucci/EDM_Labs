@@ -8,9 +8,10 @@ par(mar=c(rep(1,4)))
 # example data taken from party vignette
 # http://cran.r-project.org/web/packages/party/vignettes/party.pdf
 
-rearrest = read.csv("/Users/RJacobucci/Documents/Github/ATI_Labs/rearrest.csv")
+
 # from: http://www.ats.ucla.edu/stat/examples/alda/
 # http://www.ats.ucla.edu/stat/r/examples/alda/ch14.htm
+rearrest = read.csv("/Users/RJacobucci/Documents/Github/ATI_Labs/rearrest.csv")
 rearrest = rearrest[,-1]
 
 
