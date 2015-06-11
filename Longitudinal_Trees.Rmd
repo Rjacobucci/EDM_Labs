@@ -198,7 +198,7 @@ fitMeasures(lgc0)["logl"]
 
 #Linear growth
 mix1 <- lme(fixed = verbal ~ grade, random = ~ grade | id, data = wisc.long, method="ML" )
-summary(mix1) # get same estimates as in LGM, notice SD nor VAR
+summary(mix1) # get same estimates as in LGM, notice SD not VAR
 
 anova.lme(mix1, mix0) #test of linearity
 summary(mix1)$logLik
@@ -207,6 +207,7 @@ summary(mix1)$logLik
 # LGC from before
 fitMeasures(run)["logl"]
 coef(run)
+
 ```
 
 Now that we see how we can specify growth curves as mixed-effects models, lets test out w/ longRPart and see if we get the same answer to SEM Trees
@@ -216,7 +217,7 @@ Now that we see how we can specify growth curves as mixed-effects models, lets t
 ```{r,fig.height=5.8}
 library(longRPart)
 #initial split on the basis based on Moeducat
-lcart.mod1 <- longRPart(verbal ~ grade, ~ Moeducat, ~1 | id,wisc.long)
+lcart.mod1 <- longRPart(verbal ~ grade,~ Moeducat, ~ 1 | id,wisc.long)
 summary(lcart.mod1)
 lrpPlot(lcart.mod1)
 lrpTreePlot(lcart.mod1,use.n=F)
