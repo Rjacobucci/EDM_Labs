@@ -30,7 +30,7 @@ library(semtree)
 For this demonstration, we are going to compare the different packages and functions in analyzing longitudinal WISC data. Data is WISC4VPE.DAT.
 
 ```{r}
-wisc <- read.table("/Users/RJacobucci/Documents/Github/ATI_Labs/wisc4vpe.dat")
+wisc <- read.table("/Users/RJacobucci/Documents/Github/EDM_Labs/wisc4vpe.dat")
 names(wisc)<- c("V1","V2","V4","V6","P1","P2","P4", "P6", "Moeducat")
 # note: V1 refers to verbal scores at grade 1, P is performance
 ```
@@ -51,8 +51,9 @@ wisc.verb.sel <- wisc.verb[sample(ntot, 30), ]
 
 
 
-wisc.long <- reshape(wisc.verb, varying = c("V1", "V2", "V4", "V6"), v.names = "verbal", 
+wisc.long <- reshape(wisc.verb, varying = c("V1", "V2", "V4", "V6"), v.names = "verbal",
                 times = c(1, 2, 4, 6), direction = "long")
+
 wisc.long.sel <- reshape(wisc.verb.sel, varying = c("V1", "V2", "V4", "V6"),
                          v.names = "verbal", times = c(1, 2, 4, 6), direction = "long")
 head(wisc.long)
@@ -197,7 +198,8 @@ fitMeasures(lgc0)["logl"]
 
 #Linear growth
 mix1 <- lme(fixed = verbal ~ grade, random = ~ grade | id, data = wisc.long, method="ML" )
-#summary(mix1)
+summary(mix1) # get same estimates as in LGM, notice SD nor VAR
+
 anova.lme(mix1, mix0) #test of linearity
 summary(mix1)$logLik
 #summary(mix1)
@@ -221,6 +223,57 @@ lrpTreePlot(lcart.mod1,use.n=F)
 ```
 
 Get almost identical results as from SEM Trees, but it looks as though longRPart allows more flexibility in the slopes between time points (grade).
+
+
+Looks more similar to a latent basis model, where the slope between time points is allowed to vary within and across groups.
+
+Latent-Basis in Lavaan with SEM Trees
+
+```{r}
+
+lbGCM <- '
+    inter =~ 1*V1 + 1*V2 + 1*V4 + 1*V6
+    slope =~ 1*V1 + s2*V2 + s4*V4 + 6*V6
+    inter ~~ vari*inter; inter ~ meani*1;
+    slope ~~ vars*slope; slope ~ means*1;
+    inter ~~ cov*slope;
+    V1 ~~ residual*V1; V1 ~ 0*1;
+    V2 ~~ residual*V2; V2 ~ 0*1;
+    V4 ~~ residual*V4; V4 ~ 0*1;
+    V6 ~~ residual*V6; V6 ~ 0*1;
+'
+lbasis.run <- lavaan(lbGCM,wisc) # could also have used growth()
+#summary(run)
+coef(lbasis.run)
+
+```
+
+Run SEM Trees
+
+```{r}
+mytree2 <- semtree(lbasis.run,wisc[,c(1:4,9)]) # only moeducat as covariate
+plot(mytree2)
+
+```
+
+Create plot of expected trajectories
+
+```{r,fig.height=6,fig.width=7,fig.align="center"}
+slope.mat <- matrix(c(1,2.255,3.711,6,1,2.132,3.607,6),1,8,byrow=T)
+
+
+# create expected trajectories from parameters
+expected.growth <- matrix(
+    rep(t(parameters(mytree2))[, "meani"], each=4) +
+  rep(t(parameters(mytree2))[, "means"], each=4)*slope.mat, nrow=2, byrow=T)
+# plot expected trajectories for each leaf
+plot(c(1,6), c(15,48), xlab="Grade", ylab="Verbal Score", type="n",main="SEM Trees LGCM")
+lines(c(1,2,4,6), expected.growth[1,], col="red", type="b", lw=3)
+lines(c(1,2,4,6), expected.growth[2,], col="blue", type="b", lw=3)
+legend("bottomright", c("Mom Ed. = 0", "Mom Ed. = 1 or 2"),col=c("red","blue"), lw=3)
+
+```
+
 
 ### REEMtree
 
