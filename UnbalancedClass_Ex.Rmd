@@ -92,6 +92,6 @@ Another way to to create a new dataset is from the caret package
 
 ```{r}
 dat.up <- upSample(Default[,2:4], Default[,1], yname = "default")
-# also downSample() if classes were switched
+
 table(dat.up$default)
 ```
