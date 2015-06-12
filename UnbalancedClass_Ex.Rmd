@@ -8,6 +8,7 @@ output: pdf_document
 This is just a short example of how to use two different packages in R for dealing with highly unbalanced classes.
 
 The first is using the ROSE package, which has a nice intro:
+
 http://journal.r-project.org/archive/2014-1/menardi-lunardon-torelli.pdf
 
 ```{r}
@@ -34,8 +35,9 @@ table(data.bal.un$default)
 # now could either run model on new dataset with balanced classes, or
 
 
-ROSE.hold <- ROSE.eval(default ~ ., data = data.bal.un, learner = rpart,acc.measure="auc",
-                       method.assess = "holdout", extr.pred = function(obj)obj[,2], seed = 1)
+ROSE.hold <- ROSE.eval(default ~ ., data = data.bal.un, learner = rpart,
+                       acc.measure="auc",method.assess = "holdout", 
+                       extr.pred = function(obj)obj[,2], seed = 1)
 ROSE.hold
 ```
 
