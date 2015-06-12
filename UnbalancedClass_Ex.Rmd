@@ -11,6 +11,10 @@ The first is using the ROSE package, which has a nice intro:
 
 http://journal.r-project.org/archive/2014-1/menardi-lunardon-torelli.pdf
 
+And publication outlining technique:
+
+http://link.springer.com/article/10.1007%2Fs10618-012-0295-5
+
 ```{r}
 library(ROSE)
 library(rpart)
@@ -81,3 +85,13 @@ confusionMatrix(pred2,Default$default)
 ```
 
 By balancing classes, we do worse according to measures such as accuracy, however, we are able to glean some information that could actually be useful in predicting propensity to default on a loan.
+
+## caret
+
+Another way to to create a new dataset is from the caret package
+
+```{r}
+dat.up <- upSample(Default[,2:4], Default[,1], yname = "default")
+# also downSample() if classes were switched
+table(dat.up$default)
+```
