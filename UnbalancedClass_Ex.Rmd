@@ -1,0 +1,81 @@
+---
+title: "UnbalancedClass_Ex"
+author: "Ross Jacobucci"
+date: "June 12, 2015"
+output: pdf_document
+---
+
+This is just a short example of how to use two different packages in R for dealing with highly unbalanced classes.
+
+The first is using the ROSE package, which has a nice intro:
+http://journal.r-project.org/archive/2014-1/menardi-lunardon-torelli.pdf
+
+```{r}
+library(ROSE)
+library(rpart)
+library(ISLR)
+data(Default)
+
+
+table(Default$default)
+1-333/(9667+333) # what we would get if predicting everyone as not defaulting
+```
+
+Easy to see that there are highly unbalanced classes, and we are going to do very well according to accuracy, but our resulting model will not provide any information above and beyond what we could do by just guessing everyone will not default, which obviously is not helpful to banks...
+
+## ROSE
+
+```{r}
+# create new dataset with balanced classes
+#note: if 1's were the smaller class, use method="over
+data.bal.un <- ovun.sample(default ~ ., data = Default, method = "under",
+                             p = 0.5, seed = 1)$data
+table(data.bal.un$default)
+# now could either run model on new dataset with balanced classes, or
+
+
+ROSE.hold <- ROSE.eval(default ~ ., data = data.bal.un, learner = rpart,acc.measure="auc",
+                       method.assess = "holdout", extr.pred = function(obj)obj[,2], seed = 1)
+ROSE.hold
+```
+
+Now that we have created a balanced sample (note, it doesn't have to be 50% sampling of classes), we can use the ROSE.eval function to run trees with rpart, and determine how we are doing on a holdout sample. Note this is just an easier way to test the results on a test dataset, without having to explicitly create a separate dataset.
+
+
+## randomForest
+
+```{r}
+
+# use randomForest to do classification with balanced classes
+library(randomForest); library(caret)
+
+# look at "classwt" argument
+rf.out <- randomForest(as.factor(default) ~ ., data=Default,classwt=c(0.5,0.5),importance=TRUE)
+varImpPlot(rf.out)
+
+```
+
+
+
+In this, class weights need to add to one
+Example weights No's as 0.5, Yes's as 0.5
+By not setting weights, implicity setting to classwt=c(0.96,0.04)
+
+```{r}
+pred1 <- predict(rf.out,newdata=Default)
+confusionMatrix(pred1,Default$default)
+
+```
+
+Compare to just treating as unbalanced with no correction
+```{r}
+
+rf.outUnbalanced <- randomForest(as.factor(default) ~ ., data=Default,importance=TRUE)
+varImpPlot(rf.outUnbalanced)
+
+pred2 <- predict(rf.outUnbalanced,newdata=Default)
+confusionMatrix(pred2,Default$default)
+
+```
+
+By balancing classes, we do worse according to measures such as accuracy, however, we are able to glean some information that could actually be useful in predicting propensity to default on a loan.
