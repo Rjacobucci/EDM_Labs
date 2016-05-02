@@ -293,9 +293,9 @@ http://cran.r-project.org/src/contrib/Archive/mvpart/
 If we treat the longitudinal data just as a multivariate outcome, we can accomplish a very similar process.
 
 ```{r}
-library(mvpart)
+#library(mvpart)
 
-mvpart(data.matrix(wisc[,1:4]) ~ Moeducat,wisc)
+#mvpart(data.matrix(wisc[,1:4]) ~ Moeducat,wisc)
 
 ```
 
