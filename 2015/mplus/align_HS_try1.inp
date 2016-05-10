@@ -1,0 +1,28 @@
+  TITLE:  MNLFA Try 1
+ 
+  DATA:  !file is "/Users/RJacobucci/Dropbox/621/Project/HS.dat";
+  	file = HS.dat;
+
+  VARIABLE:  names are id sex ageyr agemo school grade x1 x2 x3 x4 x5 x6 x7 x8 x9;
+            ! ageyr won't converge
+             usevar are x1 x2 x3 x4 x5 x6 x7 x8 x9;
+             !categorical are sex;
+             missing are all (-99);
+             CLASSES = c(2);
+             KNOWNCLASS = c(grade =7-8);!(1= male 2 = female);
+  
+  ANALYSIS: TYPE = MIXTURE;
+  	ESTIMATOR = ML;
+  	ALIGNMENT = FIXED;
+    STARTS = 500 20;
+   MODEL: %OVERALL%
+        	   f1 by x1-x9;
+  
+   OUTPUT: TECH1 TECH8 ALIGN;
+        	   
+        	   
+
+
+
+
+
