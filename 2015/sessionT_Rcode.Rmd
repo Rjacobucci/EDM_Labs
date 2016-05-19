@@ -1,0 +1,473 @@
+---
+title: "Group Search pt.1"
+output: pdf_document
+---
+
+The goal of this demonstration is to look at techniques that go beyond linear regression for testing measurment invariance and searching for groups.\
+\
+One of the main methods we will be covering is SEM Trees, see this Psych Methods publication:
+http://psycnet.apa.org/journals/met/18/1/71/
+\
+Firest, lets load some of the important packages:
+```{r,warning=F,message=F,error=FALSE}
+library(lavaan) # SEM
+library(OpenMx) # SEM -- need for semtree -- can't install through R
+source('http://openmx.psyc.virginia.edu/getOpenMx.R')
+library(semtree) # SEM Trees & Forests -- can't install through R 
+#source('http://www.brandmaier.de/semtree/getsemtree.R')
+library(pROC) # for roc
+```
+Neither the OpenMx nor semtree packages are on CRAN, have to download from their respective websites. (see links above)\
+\
+Note: to install semtree, OpenMx has to already be installed!
+
+
+SEM Trees Prereq's
+==========================
+
+
+We will use the Holzinger-Swineford 1939 data from the lavaan package
+
+```{r,warning=F,message=F,error=FALSE}
+HS <- HolzingerSwineford1939[,-c(1,4)] # make shorter dataset name
+colnames(HS)
+```
+So we have 9 variables that will comprise the CFA model (x1-x9), and five covariates ("sex","ageyr","school","grade"). Note, we could combine "ageyr" and "agemo", but this is just a demo.
+
+For the semtree package, you can specify any SEM that either OpenMx or lavaan can fit. The demonstration on the website uses a Latent Growth Curve model:\
+http://brandmaier.de/semtree/user-guide/using-openmx-with-semtree/  
+\
+For our purposes, we will just use a simple one-factor CFA model. Note-- the proper factor structure is 3 factors, but the more misfit, the more potential to split on covariates.\
+\
+At the time this script was created, the semtree package works with both OpenMx and lavaan, but with varying degrees of effectiveness. It tends to work across a wider number of conditions with OpenMx (yet much much slower than lavaan), so therefore we will use OpenMx here.\
+
+
+One factor model in lavaan just for demonstration
+```{r,warning=F,message=F,error=FALSE}
+model1.lav <- '
+F1 =~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9
+'
+lav.fit <- cfa(model1.lav, HS,meanstructure=T)
+#summary(lav.fit,fit=T)
+
+```
+
+OpenMx\
+Note -- OpenMx is a little touchy when it comes to starting values, as they are more important to properly specify than lavaan or Mplus in my experience. Therefore, I usually run the model first in lavaan and just copy the parameter estimates. If you have a larger model and don't want to type parameters, you could make it quicker and pull directly from lavaan:
+
+```{r,warning=F,message=F,error=FALSE}
+# just factor loadings
+lav.load <- parameterestimates(lav.fit)$est[parameterestimates(lav.fit)$op == "=~"]
+lav.load
+# just covariances (residual)
+lav.resids <- parameterestimates(lav.fit)$est[parameterestimates(lav.fit)$op == "~~"]
+lav.resids
+```
+Could assign vector to an object, and specify the object directly in the mxModel()\
+
+OpenMx
+```{r,warning=F,message=F,error=FALSE}
+
+model1.openmx <- mxModel("Model 1",
+                      type="RAM",
+                      mxData(
+                        observed=HS,
+                        type="raw"
+                      ),
+                      manifestVars=c("x1","x2","x3","x4","x5","x6","x7","x8","x9"),
+                      latentVars="F1",
+                      # residual variances
+                      mxPath(
+                        from=c("x1","x2","x3","x4","x5","x6","x7","x8","x9"),
+                        arrows=2,
+                        free=TRUE,
+                        values=c(1.1,1.3,1.2,.4,.5,.35,1.1,1,.9),
+                        labels=c("e1","e2","e3","e4","e5","e6","e7","e8","e9")
+                      ),
+                      # latent variance
+                      mxPath(
+                        from="F1",
+                        arrows=2,
+                        free=TRUE,
+                        values=0.26,
+                        labels ="varF1"
+                      ),
+                      # factor loadings
+                      mxPath(
+                        from="F1",
+                        to=c("x1","x2","x3","x4","x5","x6","x7","x8","x9"),
+                        arrows=1,
+                        free=c(FALSE,T,T,T,T,T,T,T,T),
+                        values=c(1,0.5,0.5,1.9,2.1,1.8,0.4,0.4,0.6),
+                        labels =c("l1","l2","l3","l4","l5","l6","l7","l8","l9")
+                      ),
+                      # means
+                      mxPath(
+                        from="one",
+                        to=c("x1","x2","x3","x4","x5","x6","x7","x8","x9","F1"),
+                        arrows=1,
+                        free=c(TRUE,TRUE,TRUE,TRUE,T,T,T,T,T,FALSE),
+                        values=c(4.93,6,2.2,3,4.3,2.1,4.1,5.5,5.3,0),
+                        labels =c("meanx1","meanx2","meanx3","meanx4","meanx5",
+                                  "meanx6","meanx7","meanx8","meanx9",NA)
+                     ),
+                    #mxExpectationNormal(),
+                    mxFitFunctionML()#,
+                    #mxTryHard()
+)
+
+
+fit.openmx <- mxRun(model1.openmx)
+
+factorSat <- mxRefModels(fit.openmx,run=T)
+#summary(fit.openmx,refModels=factorSat)
+
+fit.openmx$output$est
+
+```
+Couple observations from OpenMx -- \
+1. warnings are generally not a problem -- will still run (except RED)\
+2. covariates not in the factor model will still affect run time. It is this fact that causes the much slower run time of OpenMx with semtree in comparison to lavaan w/ semtree\
+\
+
+Traditional Multiple Groups
+
+Important thing to remember is that it can only really handle categorical grouping variables
+* If you want an example of how to specify model in OpenMx let me know
+* Note that this corresponds to configural invariance
+```{r}
+model1.lav <- '
+F1 =~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9
+'
+lav.Group1 <- cfa(model1.lav, HS,meanstructure=T,group="sex")
+anova(lav.fit,lav.Group1)
+#summary(lav.Group1,fit=T)
+
+# Metric
+#lav.Group2 <- cfa(model1.lav, HS,meanstructure=T,group="sex",
+#               group.equal="loadings")
+# Strong
+#lav.Group3 <- cfa(model1.lav, HS,meanstructure=T,group="sex",
+#               group.equal="loadings,intercepts")
+# Strict
+#lav.Group4 <- cfa(model1.lav, HS,meanstructure=T,group="sex",
+#               group.equal="loadings,intercepts,residuals")
+
+# also could use measurementInvariance() from semTools package
+```
+
+We could continue this process by constraining the loadings to be equal (Metric), intercepts (Strong), and finally residuals (Strict).\
+\
+But this only really works for categorical variables.
+
+## Using covariates
+
+
+```{r}
+library(semPlot)
+model11.lav <- '
+F1 =~ x1 + x2 + x3 + x4 + x5 + x6 + x7 + x8 + x9
+F1 ~ sex
+'
+lav.Cov1 <- cfa(model11.lav, HS,meanstructure=T)
+#summary(lav.Cov1,fit=T)
+parameterEstimates(lav.Cov1)[10,]
+```
+
+What does this model look like?
+```{r}
+semPaths(lav.Cov1,intercepts=F)
+```
+
+So now with adding a covariate, we are no longer only affecting the likelihood, we are changing the parameter estimates (loadings).\
+\
+Are they nested? I don't think so...\
+\
+This procedure should be somewhat similar to using linear regression with an estimated factor score.\
+
+```{r}
+# create factor score
+fscor.lav = predict(lav.fit)
+lm(fscor.lav ~ HS$sex)
+```
+
+Pretty close estimates, but now the covariate has no relationship to factor loadings residuals etc...\
+\
+How about summed score?\
+```{r}
+# first scale variables
+indicators <- scale(HS[,5:13])
+sum <- rowSums(indicators)
+lm(sum ~ HS$sex)
+
+```
+Very different estimates, which is to be expected. Creating factor scores can be though of as a weighted form of summed scores, where the weight corresponds to the factor loading.\
+\
+We can do the same things with continuous covariates, but we can use continuous covariates in the sense of assessing invariance. Further, if we enter a continuous variable to assess invariance, it splits the sample into groups based on each value of the covariate. This is infeasible unless there are a  large number of cases (people) per value of the covariate.\
+\
+Later, we will look at if the covariate is ordinal. Traditional multiple groups treat them as nominal, not ordinal.\
+
+
+# SEM Trees
+ 
+ 
+http://brandmaier.de/semtree/
+\
+Now that we have this model, we can use the model object for semtree()\
+\
+But before we try out SEM Trees, lets compare it to two alternative, but very similar methods: The use of Decision Trees with factor scores and summed scores. In some situations, it may be interesting to compare the resulting tree structure across methods.
+
+## Factor scores:
+```{r,warning=F,message=F,fig.height=6.5}
+# append to HS
+HS.run <- HS
+HS.run$fscor <- fscor.lav
+rpart.fscor <- rpart(fscor ~ sex + ageyr + school + grade,data=HS.run)
+plot(rpart.fscor,compress=T);text(rpart.fscor)
+rpart.fscor # first split is school
+```
+
+
+### Summed Scores:
+
+```{r,warning=F,message=F,error=FALSE,fig.height=6.5}
+# note, if you have missing data and want to impute it
+# one of the easiest procedures I know of uses caret
+# uses k-nearest neighbors imputation -- quick and easy
+library(caret)
+sub1 = HS.run[,5:13]
+HS.run$sum <- sum
+proc = preProcess(sub1,method=c("center","scale","knnImpute"))
+model1.proc = predict(proc,sub1)
+# HS$sum <- rowSums(model1.proc)
+
+rpart.sumscor <- rpart(sum ~ sex + ageyr + school + grade,data=HS.run)
+plot(rpart.sumscor);text(rpart.sumscor)
+rpart.sumscor # first split is grade
+
+```
+Interesting that there are very different structure based on whether factor scores or summed scores are used.\
+\
+In this case, what do we gain using DT's over just linear regression?
+```{r}
+lm.out1 <- lm(fscor ~ sex + ageyr + school + grade,data=HS.run)
+summary(lm.out1)
+
+lm.out2 <- lm(sum ~ sex + ageyr + school + grade,data=HS.run)
+summary(lm.out2)
+```
+
+Gain a little predictive power using factor scores. But is the R-squared higher in DT?
+
+```{r}
+cor(predict(rpart.fscor),HS.run$fscor)**2
+cor(predict(rpart.sumscor),HS.run$sum)**2
+```
+Almost identical
+
+How about for which predictors are important/significant?
+```{r}
+summary(lm.out1)
+summary(lm.out2)
+```
+For both, "ageyr" and "grade" seem to be the best predictors\
+\
+First split in rpart with factor score was 'school"\
+\
+First split in rpart with sum score is "grade"\
+\
+All methods agree that "sex" isn't important\
+\
+The most important distinction is the DT or CART "automatically" search for interactsion, where linear regression you have to manually create interaction variables.
+
+
+## SEM Trees Run
+
+It is worth noting that there are inherent problems with estimating factor scores -- better to not have to estimate and keep as part of SEM. This is exactly what SEM Trees do -- no explicit estimation of factor scores. \
+\
+SEM Trees -- just with defaults
+```{r,warning=F,message=F,error=FALSE}
+#control <- semtree.control()
+#control$method <- "naive"
+
+
+# !!!!!!!! weird problem: not exporting summary ??????
+# wasn't there a year ago
+
+system.time(semtree_model1 <- semtree(fit.openmx))
+
+
+#warnings()
+
+
+# lavaan doesn't work
+system.time(semtree_model11 <- semtree(lav.fit,HS))
+semtree_model11
+plot(semtree_model11)
+
+```
+So same first split as with factor scores, but not near the depth. Now the Decision Tree algorithm may be slightly different in rpart and semtree, but the bigger difference is in the splitting criterion. semtree uses the likelihood ratio test, which you can think of in relation to a multiple group model. For each split, the data is split into two subgroups. The fit of subgroup1 + subgroup2 is compared to the fit of no groups (all cases). It searches for subgroups with similar model parameters, that are more similar to each other and disimilar from other groups. \
+\
+Now, there are many different options for modifying the default semtree. These are changed in the semtree.control() function.\ 
+\
+Example:
+
+```{r,warning=F,message=F,error=FALSE}
+control <- semtree.control()
+
+# get all options and see what they need to be called
+str(control)
+
+control$min.N = 50 # important for numerical stability
+
+######## problem with using every method but "naive" in lavaan !!!!!
+#control$method <- "fair"
+#control$method <- "cv"
+
+control # shows all options
+
+semtree_model2 <- semtree(fit.openmx,HS,control)
+plot(semtree_model2)
+```
+
+In this, we changed the splitting criterion method. The default is "naive" which has no correction for the number of response options for each covariate. The "fair" option is very similar to that in the ctree() from party, where it is an unbiased splitting criterion. By unbiased I am referring to the default CART programs give an implicit preference to splitting on covariates that have a large number of response options. By chance, these covariates are more likely to be chosen for splitting simply due to the large number of response options. \
+\
+the method options are "naive", "fair", and "cv"\
+\
+An easy way to ensure measurement invariance. Comparing subgroups without constraining the model and testing for measurement invariance does not ensure that you are measuring the same thing in each potential subgroup that results from a semtree model.\
+\
+SEM Trees makes it very easy to add invariance constraints w/o having to go back and modify the OpenMx or lavaan models.\
+\
+Note:invariance only implemented for "naive"
+\
+In this model, I am forcing the loadings to be the exact same across each tested subgroup. Note that this can result in very different model results.
+
+```{r,warning=F,message=F,error=FALSE}
+# Metric Invariance
+control$alpha.invariance <- 0.01
+control$method <- "naive"
+loads <- c("l2","l3","l4","l5","l6","l7","l8","l9") # "l1" already the same
+
+semtree_invar <- semtree(fit.openmx,control=control,global.constraints=loads)
+plot(semtree_invar)
+#same can be done for strong invariance
+intercepts <- c("meanx1","meanx2","meanx3","meanx4","meanx5",
+                "meanx6","meanx7","meanx8","meanx9")
+semtree_invar2 <- semtree(fit.openmx,control=control,global.constraints=c(loads,intercepts))
+plot(semtree_invar2)
+# change LRT alpha parameter -- default = 0.05
+```
+Note: if doing with lavaan, make sure meanstructure=T is used, otherwise hard to get intercept (mean) parameters for each indicator variable.\
+
+
+Other options:
+```{r,warning=F,message=F,error=FALSE,eval=FALSE}
+control$max.depth <- 5 # how many levels to tree structure
+control$min.N <- 50 # minimum number of cases per leaf node
+control$num.folds <- 10 # number of cross-validation folds
+control$bonferroni <- T # corrects for multiple-testing
+control$verbose <- F # show what split is it on
+control$progress.bar <- FALSE # annoying messages for parallelizing
+```
+
+# SEM Forests
+
+Not out in publication yet, but available through the semtree package. \
+\
+SEM Forests compared to SEM Trees is analogous to Decision Trees compared to Random Forests. With SEM Forests, we are losing interpretability:
+**no single tree, instead hundreds or thousands**. Even though we lose our ability to explicitly see the relationship between the covariates and the SEM model, we gain much higher predictive power. By using hundreds (thousands) of trees and choosing a subset of predictors to create each tree, we are able to fit the relationship between covariates and SEM to a much higher degree. \
+
+
+With having to create hundreds or thousands of trees it is predictably much much slower than creating a single tree. So similar to using random forests, it becomes advantageous to set up your R session and models to be run in parallel. \
+\
+Important: different packages in R using different packages for parallelization, and these different packages work differently across Macs and Windows OS's (and Linux)\
+
+```{r,warning=F,message=F,error=FALSE}
+library(snowfall)
+sfInit(parallel=T,cpus=4) # cluster of 4 CPUs created, in parallel
+
+# not sure how many on your machine?
+detectCores()
+# Sys.getenv('NUMBER_OF_PROCESSORS') # Windows
+
+
+sfLibrary(OpenMx)# using OpenMx package in the cluster
+sfLibrary(semtree) # using semtree package in the cluster
+
+```
+
+
+Now that we are maxing out our computer, we are ready to run SEM Forests using the same OpenMx model as before.
+
+```{r,warning=F,message=F,error=FALSE}
+control <- semforest.control()
+
+# needed for transferring same controls from semtree() to semforest()
+control$semtree.control <- semtree.control()
+
+
+control$num.trees <- 50 # number of trees to fit
+control$sampling <- "subsample" # sampling process
+#control$sampling <- "bootstrap"
+control$mtry <- 2 # number of variables compared per node
+print(control)
+```
+Note: subsampling seems to be preferred:
+http://www.biomedcentral.com/1471-2105/8/25
+\
+Let's run it
+```{r,warning=F,message=F,error=FALSE}
+forest.subsample <- semforest(fit.openmx,HS,control)
+```
+
+Not much for summary() or print. Instead, other functions for extracting results.\
+
+Variable importance is the one of the best ways to get a feel for which variables impacted the prediction the most. This is when there isn't a single tree to visualize.
+
+```{r,warning=F,message=F,error=FALSE}
+set.seed(1234)
+vim.subsample <- varimp(forest.subsample,parallel=T)
+
+plot(vim.subsample)
+```
+
+Similar to the semtree results, school seems to be most important (first split)\
+\
+Variable importance can be thought of the number of times each variable was chosen to be split on across all of the trees that were created. Gives an idea of which variables are necessary if you wanted to run the study again in the future and had to make a choice at which variables to keep from one study to the future study.\
+\
+Case Proximity Plots. This is a way to a form of clustering of cases (individuals) that tend to have similar values or fit across trees.\
+\
+analogous to randomForest(...,proximity=TRUE)$proximity from randomForest package
+
+
+```{r,warning=F,message=F,error=FALSE}
+prox.subsample <- proximity(forest.subsample)
+plot(prox.subsample)
+```
+
+
+Pruning.\
+Once a forest is created, you can go back and prune the individual trees in an attempt to make the results more generalizeable.
+
+```{r,warning=F,message=F,error=FALSE}
+pforest.subsample <- prune.semforest(forest.subsample, max.depth=1)
+plot(varimp(pforest.subsample))
+```
+
+This can change our interpretation of variable importance. Note that grade now becomes the most important variable instead of school.\
+
+So would we get similar results if we used randomForest() with factor scores?\
+
+Note: randomForest has to have complete cases\
+-- we could impute, but for example we just use remove cases
+```{r,warning=F,message=F,error=FALSE}
+library(psych)
+#describe(HS.run)
+
+HS.comp <- HS.run[complete.cases(HS.run),]
+
+library(randomForest)
+rf.fscor <- randomForest(fscor ~ sex + ageyr + school + grade,data=HS.comp)
+varImpPlot(rf.fscor)
+```
+Oddly, now ageyr becomes the most important
